@@ -1,0 +1,26 @@
+# LaTeX (Overleaf/Local)
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# C/C++
+*.o
+*.exe
+*.out
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Java
+*.class
+
+# VS Code e SO
+.vscode/
+.DS_Store
