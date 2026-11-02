@@ -1,0 +1,9 @@
+[project]
+name = "redes"
+version = "0.1.0"
+description = "TP de Grafos: análise de redes sociais em Python puro"
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
