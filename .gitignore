@@ -16,3 +16,16 @@ __pycache__/
 # VS Code e SO
 .vscode/
 .DS_Store
+
+# Testes
+.pytest_cache/
+.hypothesis/
+
+# Datasets baixados (cada um baixa; veja data/README.md)
+data/raw/
+
+# Outros editores e saidas do BibTeX
+.idea/
+*.bbl
+*.blg
+Thumbs.db
