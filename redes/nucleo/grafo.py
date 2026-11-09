@@ -1,141 +1,80 @@
-"""Estrutura de grafo em lista de adjacência, em Python puro.
-
-Cada nó guarda um dicionário {vizinho: peso}. Num grafo direcionado guardamos
-também os predecessores, para calcular grau de entrada e PageRank em O(1) por nó.
-
-Memória: O(n + m). Inserir nó ou aresta: O(1) em média. Testar aresta: O(1) em média.
-"""
 from __future__ import annotations
 
 from collections.abc import Hashable, Iterable, Iterator
 
-No = Hashable
+# Qualquer objeto imutável/hashable (inteiro, string) pode ser um nó do grafo
+No = Hashable 
 
 
 class Grafo:
-    """Grafo simples (sem arestas paralelas), direcionado ou não, com pesos.
+    # Travando os atributos da classe para economizar memória (desativa o comportamento dinâmico, impedindo a criação acidental de novos atributos)
+    __slots__= ("direcionado", "_adj", "_pred", "_m") 
 
-    Grafos sem peso usam peso 1.0. Laços (u, u) são aceitos porque o Louvain
-    cria laços ao agregar comunidades; os leitores de dados os descartam.
-    """
+    # Inicializa o grafo (Construtor) 
+    def __init__(self, direcionado: bool = False) -> None: 
 
-    __slots__ = ("direcionado", "_adj", "_pred", "_m")
+        # Indica se o grafo é direcionado ou não (booleano)
+        self.direcionado = direcionado 
 
-    def __init__(self, direcionado: bool = False) -> None:
-        self.direcionado = direcionado
-        self._adj: dict[No, dict[No, float]] = {}
-        # No grafo não direcionado, predecessores e sucessores são o mesmo dicionário.
+        # Lista de adjacência: A chave externa é o nó de origem, a chave interna é o nó de destino e o valor é o peso da aresta (float)
+        self._adj: dict[No, dict[No, float]] = {} 
+
+        # Lista de predecessores: Guarda as arestas de entrada, ou seja, quem aponta para o nó. 
+        # Se o grafo for não-direcionado, a lista de predecessores é a mesma que a lista de adjacência. Caso contrário, é uma lista separada. 
         self._pred: dict[No, dict[No, float]] = {} if direcionado else self._adj
+
+        # Conta o número de arestas inseridas. Inicialmente é zero.
         self._m = 0
 
-    # ------------------------------------------------------------ construção
-    def adicionar_no(self, u: No) -> None:
-        """Adiciona o nó u (não faz nada se já existir). O(1)."""
-        if u not in self._adj:
-            self._adj[u] = {}
+    # Inicializa um dicionário vazio para um novo nó do grafo
+    def adicionar_no(self, v: No) -> None:
+
+        # Verifica se o nó já existe na lista de adjacência para não sobrescrever e apagar as conexões existentes.
+        if v not in self._adj:
+
+            # Inicializa um dicionário vazio para o nó v na lista de adjacência
+            self._adj[v] = {}
+
+            # Se o grafo for direcionado, o método também inicializa um dicinário vazio para o nó v na lista de predecessores.
             if self.direcionado:
-                self._pred[u] = {}
+                self._pred[v] = {}
 
-    def adicionar_aresta(self, u: No, v: No, peso: float = 1.0) -> None:
-        """Adiciona a aresta (u, v), criando os nós se preciso. O(1).
-
-        Se a aresta já existir, só atualiza o peso (não conta duas vezes).
-        """
-        self.adicionar_no(u)
+    # Adiciona uma aresta entre os nós v (origem) e w (destino) com um peso inicial de 1.0, como convenção para grafos não ponderados.
+    def adicionar_aresta(self, v: No, w: No, peso: float = 1.0) -> None: 
+        
+        # Adiciona os nós v e w ao grafo para garantir que ambos existam antes da adição da aresta. 
         self.adicionar_no(v)
-        if v not in self._adj[u]:
-            self._m += 1
-        self._adj[u][v] = peso
-        if self.direcionado:
-            self._pred[v][u] = peso
-        else:
-            self._adj[v][u] = peso
+        self.adicionar_no(w)
 
+        # Se w não for adjacente a v, quer dizer que a aresta não existe, então incrementa o contador de arestas.
+        if w not in self._adj[v]:
+            self._m += 1
+
+        # Adiciona a aresta na lista de adjacência com v como nó de origem e w como nó de destino, atribuindo o peso da aresta.
+        self._adj[v][w] = peso
+        
+        # Se o grafo for direcionado, adiciona também a aresta na lista de predecessores.
+        if self.direcionado:
+            self._pred[w][v] = peso
+        
+        # Se o grafo for não-direcionado, adiciona a aresta na lista de adjacência com w como nó de origem e v como nó de destino.
+        else:
+            self._adj[w][v] = peso
+
+    # Cria o grafo a partir de uma lista de arestas. Essas arestas são reprentadas por tuplas (v, w, peso) ou (v, w). 
     @classmethod
     def de_arestas(cls, arestas: Iterable[tuple], direcionado: bool = False) -> "Grafo":
-        """Cria um grafo a partir de pares (u, v) ou triplas (u, v, peso). O(m)."""
+        
+        # Cria uma instância do grafo com o parâmetro direcionado especificado.
         g = cls(direcionado=direcionado)
+
+        # Itera sobre cada aresta na lista de arestas e adiciona essas aresas ao grafo.
         for aresta in arestas:
+
+            # Passa os elementos da tupla (v, w, peso) ou (v,w) como argumentos usando o operador de desempacotamento '*'.
             g.adicionar_aresta(*aresta)
+        
+        # Retorna o grafo criado a partir das arestas fornecidas.
         return g
 
-    # -------------------------------------------------------------- consulta
-    def tem_no(self, u: No) -> bool:
-        """True se o nó u existe. O(1)."""
-        return u in self._adj
 
-    def tem_aresta(self, u: No, v: No) -> bool:
-        """True se existe a aresta (u, v). O(1)."""
-        return u in self._adj and v in self._adj[u]
-
-    def vizinhos(self, u: No) -> Iterator[No]:
-        """Vizinhos de u (sucessores, no grafo direcionado). O(1) para começar."""
-        return iter(self._adj[u])
-
-    def predecessores(self, u: No) -> Iterator[No]:
-        """Nós com aresta chegando em u (no não direcionado, os vizinhos)."""
-        return iter(self._pred[u])
-
-    def peso(self, u: No, v: No) -> float:
-        """Peso da aresta (u, v). Lança KeyError se ela não existir. O(1)."""
-        return self._adj[u][v]
-
-    def grau_saida(self, u: No) -> int:
-        """Número de arestas que saem de u. O(1)."""
-        return len(self._adj[u])
-
-    def grau_entrada(self, u: No) -> int:
-        """Número de arestas que chegam em u. O(1)."""
-        return len(self._pred[u])
-
-    def grau(self, u: No) -> int:
-        """Grau de u. O(1).
-
-        Não direcionado: número de vizinhos, com laço contando 2 (assim a soma
-        dos graus é sempre 2m). Direcionado: grau de entrada + grau de saída.
-        """
-        if self.direcionado:
-            return len(self._adj[u]) + len(self._pred[u])
-        return len(self._adj[u]) + (1 if u in self._adj[u] else 0)
-
-    def nos(self) -> Iterator[No]:
-        """Todos os nós, na ordem de inserção."""
-        return iter(self._adj)
-
-    def arestas(self) -> Iterator[tuple[No, No, float]]:
-        """Todas as arestas (u, v, peso). No não direcionado, cada uma aparece uma vez. O(n + m)."""
-        if self.direcionado:
-            for u, vizinhos in self._adj.items():
-                for v, peso in vizinhos.items():
-                    yield u, v, peso
-            return
-        vistos: set[No] = set()
-        for u, vizinhos in self._adj.items():
-            for v, peso in vizinhos.items():
-                if v not in vistos:
-                    yield u, v, peso
-            vistos.add(u)
-
-    def numero_de_nos(self) -> int:
-        """Quantidade de nós (n). O(1)."""
-        return len(self._adj)
-
-    def numero_de_arestas(self) -> int:
-        """Quantidade de arestas (m). O(1)."""
-        return self._m
-
-    @property
-    def adj(self) -> dict[No, dict[No, float]]:
-        """Acesso direto à lista de adjacência, só para LEITURA nos laços pesados."""
-        return self._adj
-
-    # ------------------------------------------------------------- utilidades
-    def __len__(self) -> int:
-        return len(self._adj)
-
-    def __contains__(self, u: No) -> bool:
-        return u in self._adj
-
-    def __repr__(self) -> str:
-        tipo = "direcionado" if self.direcionado else "não direcionado"
-        return f"Grafo({tipo}, n={self.numero_de_nos()}, m={self.numero_de_arestas()})"
