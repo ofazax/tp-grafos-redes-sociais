@@ -2,7 +2,7 @@
 
 Ferramenta em Python puro que carrega uma rede social real, calcula grau, centralidades,
 agrupamento e comunidades e mostra os resultados numa interface gráfica.
-Bibliotecas de grafos (NetworkX etc.) só aparecem em `bench/`, para comparar desempenho.
+Bibliotecas de grafos (NetworkX etc.) só aparecem em `desempenho/`, para comparar desempenho.
 
 ## Como rodar (Windows, Prompt de Comando)
 
@@ -20,21 +20,24 @@ No PowerShell, ative com `.venv\Scripts\Activate.ps1`; no Linux ou macOS, com `s
 ## Estrutura
 
 ```text
-app.py        entrada da interface (streamlit run app.py)
-ui/           telas da interface
-redes/        pacote do TP, sem NetworkX
-  core/       classe Graph
-  loaders/    leitura das bases
-  generators/ grafos sintéticos
-  metrics/    grau, caminhos, centralidades, clustering
-  community/  modularidade, Louvain, Label Propagation
-  applied/    problema aplicado
-  viz/        layout do desenho da rede
-bench/        benchmarks e comparação com o NetworkX
-tests/        testes (pytest + Hypothesis)
-data/         links das bases; data/raw/ fica fora do Git
-docs/uml/     diagramas UML
+app.py          entrada da interface (streamlit run app.py)
+interface/      telas da interface
+redes/          pacote do TP, sem NetworkX
+  nucleo/       classe Grafo
+  leitores/     leitura das bases
+  geradores/    grafos sintéticos
+  metricas/     grau, caminhos, centralidades, agrupamento
+  comunidades/  modularidade, Louvain, propagação de rótulos
+  aplicacao/    problema aplicado (influenciadores)
+  visualizacao/ posicionamento dos nós no desenho da rede
+desempenho/     medições e comparação com o NetworkX
+tests/          testes (pytest + Hypothesis)
+dados/          links das bases; dados/brutos/ fica fora do Git
+documentos/uml/ diagramas UML
 ```
+
+O código usa nomes em português (`Grafo`, `adicionar_aresta`, `grau`...). Siglas e nomes
+próprios de algoritmos ficam como são conhecidos: `bfs`, `dijkstra`, `pagerank`, `louvain`.
 
 ## Fluxo de trabalho
 

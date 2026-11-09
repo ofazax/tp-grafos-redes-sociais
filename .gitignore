@@ -21,8 +21,8 @@ __pycache__/
 .pytest_cache/
 .hypothesis/
 
-# Datasets baixados (cada um baixa; veja data/README.md)
-data/raw/
+# Bases baixadas (cada um baixa; veja dados/README.md)
+dados/brutos/
 
 # Outros editores e saidas do BibTeX
 .idea/
