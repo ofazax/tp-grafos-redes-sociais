@@ -5,13 +5,13 @@ import pytest
 
 MODULOS = [
     "redes",
-    "redes.core",
-    "redes.loaders",
-    "redes.generators",
-    "redes.metrics",
-    "redes.community",
-    "redes.applied",
-    "redes.viz",
+    "redes.nucleo",
+    "redes.leitores",
+    "redes.geradores",
+    "redes.metricas",
+    "redes.comunidades",
+    "redes.aplicacao",
+    "redes.visualizacao",
 ]
 
 

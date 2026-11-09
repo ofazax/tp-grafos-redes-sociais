@@ -3,4 +3,4 @@ import streamlit as st
 
 st.set_page_config(page_title="Análise de Redes Sociais com Grafos", layout="wide")
 st.title("Análise de Redes Sociais com Grafos")
-st.write("Interface em construção. As telas ficam na pasta ui/ (Frente 6).")
+st.write("Interface em construção. As telas ficam na pasta interface/ (Frente 6).")

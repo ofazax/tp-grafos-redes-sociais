@@ -1,5 +1,5 @@
-# Dependências de desenvolvimento: testes, figuras do relatório e benchmarks.
-# O networkx só pode ser importado dentro de bench/ (comparação de desempenho).
+# Dependências de desenvolvimento: testes, figuras do relatório e medições de desempenho.
+# O networkx só pode ser importado dentro de desempenho/ (comparação com o NetworkX).
 pytest==9.2.0
 hypothesis==6.170.14
 matplotlib==3.11.2
