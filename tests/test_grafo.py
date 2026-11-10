@@ -28,7 +28,7 @@ def test_completo_k5():
     g = completo(5)
     assert g.numero_de_nos() == 5
     assert g.numero_de_arestas() == 10  # n(n-1)/2
-    assert all(g.grau(u) == 4 for u in g.nos())
+    assert all(g.grau(v) == 4 for v in g.nos())
 
 
 def test_estrela():
@@ -69,7 +69,7 @@ def test_direcionado():
 
 def test_arestas_lista_cada_aresta_uma_vez():
     g = completo(4)
-    pares = {frozenset((u, v)) for u, v, _ in g.arestas()}
+    pares = {frozenset((v, w)) for v, w, _ in g.arestas()}
     assert len(pares) == len(list(g.arestas())) == 6
 
 
@@ -86,7 +86,7 @@ listas_de_arestas = st.lists(st.tuples(st.integers(0, 30), st.integers(0, 30)), 
 @given(listas_de_arestas)
 def test_soma_dos_graus_e_2m(lista):
     g = Grafo.de_arestas(lista)
-    assert sum(g.grau(u) for u in g.nos()) == 2 * g.numero_de_arestas()
+    assert sum(g.grau(v) for v in g.nos()) == 2 * g.numero_de_arestas()
 
 
 @given(listas_de_arestas)
@@ -98,6 +98,6 @@ def test_arestas_bate_com_numero_de_arestas(lista):
 @given(listas_de_arestas)
 def test_direcionado_entrada_igual_saida(lista):
     g = Grafo.de_arestas(lista, direcionado=True)
-    total_saida = sum(g.grau_saida(u) for u in g.nos())
-    total_entrada = sum(g.grau_entrada(u) for u in g.nos())
+    total_saida = sum(g.grau_saida(v) for v in g.nos())
+    total_entrada = sum(g.grau_entrada(v) for v in g.nos())
     assert total_saida == total_entrada == g.numero_de_arestas()
