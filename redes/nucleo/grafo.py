@@ -26,6 +26,9 @@ class Grafo:
         # Conta o número de arestas inseridas. Inicialmente é zero.
         self._m = 0
 
+   
+    # Inserior nós e arestas:
+
     # Inicializa um dicionário vazio para um novo nó do grafo
     def adicionar_no(self, v: No) -> None:
 
@@ -77,4 +80,72 @@ class Grafo:
         # Retorna o grafo criado a partir das arestas fornecidas.
         return g
 
+    # Consultas: 
 
+    def tem_no(self, v:No) -> bool:
+        return v in self._adj
+
+    def tem_aresta(self, v: No, w: No) -> bool:
+        return v in self._adj and w in self._adj[v]
+
+    def vizinhos(self, v: No) -> Iterator[No]:
+        return iter(self._adj[v])
+
+    def predecessores(self, v: No) -> Iterator[No]:
+        return iter(self._pred[v])
+
+    def peso(self, v: No, w: No) -> float:
+        return self._adj[v][w]
+
+    def grau_saida(self, v: No) -> int:
+        return len(self._adj[v])
+
+    def grau_entrada(self, v: No) -> int:
+        return len(self._pred[v])
+
+    def grau(self, v: No) -> int:
+        if self.direcionado:
+            return len(self._adj[v]) + len(self._pred[v])
+        return len(self._adj[v]) + (1 if v in self._adj[v] else 0)
+
+
+    # Listar nós e arestas:
+
+    def nos(self) -> Iterator[No]:
+        return iter(self._adj)
+
+    def arestas(self) -> Iterator[tuple[No, No, float]]:
+        if self.direcionado:
+            for v, vizinhos in self._adj.items():
+                for w, peso in vizinhos.items():
+                    yield v, w, peso
+            return
+        vistos: set[No] = set()
+        for v, vizinhos in self._adj.items():
+            for w, peso in vizinhos.items():
+                if w not in vistos:
+                    yield v, w, peso
+            vistos.add(v)
+
+    def numero_de_nos(self) -> int:
+        return len(self._adj)
+
+    def numero_de_arestas(self) -> int:
+        return self._m
+
+    @property
+    def adj(self) -> dict[No, dict[No, float]]:
+        return self._adj
+
+    
+    # Métodos especiais:
+
+    def __len__(self) -> int: 
+        return len(self._adj)
+
+    def __contains__(self, v: No) -> bool:
+        return v in self._adj
+
+    def __repr__(self) -> str:
+        tipo = "direcionado" if self.direcionado else "não direcionado"
+        return f"Grafo({tipo}, n={self.numero_de_nos()}, m={self.numero_de_arestas()})"
