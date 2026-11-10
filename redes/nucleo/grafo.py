@@ -27,7 +27,7 @@ class Grafo:
         self._m = 0
 
    
-    # Inserior nós e arestas:
+    # Inserir nós e arestas:
 
     # Inicializa um dicionário vazio para um novo nó do grafo
     def adicionar_no(self, v: No) -> None:
@@ -38,7 +38,7 @@ class Grafo:
             # Inicializa um dicionário vazio para o nó v na lista de adjacência
             self._adj[v] = {}
 
-            # Se o grafo for direcionado, o método também inicializa um dicinário vazio para o nó v na lista de predecessores.
+            # Se o grafo for direcionado, o método também inicializa um dicionário vazio para o nó v na lista de predecessores.
             if self.direcionado:
                 self._pred[v] = {}
 
@@ -50,6 +50,7 @@ class Grafo:
         self.adicionar_no(w)
 
         # Se w não for adjacente a v, quer dizer que a aresta não existe, então incrementa o contador de arestas.
+        # Se a aresta já existir , a aresta não é contada novamente.
         if w not in self._adj[v]:
             self._m += 1
 
@@ -64,14 +65,14 @@ class Grafo:
         else:
             self._adj[w][v] = peso
 
-    # Cria o grafo a partir de uma lista de arestas. Essas arestas são reprentadas por tuplas (v, w, peso) ou (v, w). 
+    # Cria o grafo a partir de uma lista de arestas. Essas arestas são representadas por tuplas (v, w, peso) ou (v, w). 
     @classmethod
     def de_arestas(cls, arestas: Iterable[tuple], direcionado: bool = False) -> "Grafo":
         
         # Cria uma instância do grafo com o parâmetro direcionado especificado.
         g = cls(direcionado=direcionado)
 
-        # Itera sobre cada aresta na lista de arestas e adiciona essas aresas ao grafo.
+        # Itera sobre cada aresta na lista de arestas e adiciona essas arestas ao grafo.
         for aresta in arestas:
 
             # Passa os elementos da tupla (v, w, peso) ou (v,w) como argumentos usando o operador de desempacotamento '*'.
@@ -82,27 +83,36 @@ class Grafo:
 
     # Consultas: 
 
+    # Checa se o nó v é uma chave no dicionário, ou seja, se o vértice v existe no grafo.
     def tem_no(self, v:No) -> bool:
         return v in self._adj
 
+    # Checa se o nó v é uma chave no dicionário e se w é um vizinho de v, ou seja, se existe uma aresta entre v e w.
     def tem_aresta(self, v: No, w: No) -> bool:
         return v in self._adj and w in self._adj[v]
 
+    # Percorre o dicionário de adjacência e retorna as chaves (vizinhos) do nó v, ou seja, para quem o v aponta.
     def vizinhos(self, v: No) -> Iterator[No]:
         return iter(self._adj[v])
 
+    # Percorre o dicionário de predecessores e retorna as chaves do nó v, ou seja, quem aponta para o v.
     def predecessores(self, v: No) -> Iterator[No]:
         return iter(self._pred[v])
 
+    # Retorna o peso da aresta entre v e w. Busca em dois níveis: _adj[v] acha o dicionário de adjacência do nó v, e [w] pega o peso guardado para w. Se não existir aresta, lança KeyError.
     def peso(self, v: No, w: No) -> float:
         return self._adj[v][w]
 
+    # O len do dicionário de adjacência do nó v é o número de chaves, ou seja, quantos vizinhos v possui ou quantas arestas saem de v. 
     def grau_saida(self, v: No) -> int:
         return len(self._adj[v])
 
+    # O len do dicionário de predecessores do nó v é o número de chaves, ou seja, quantos predecessores v possui ou quantas arestas chegam em v.
     def grau_entrada(self, v: No) -> int:
         return len(self._pred[v])
 
+    # No grafo direcionado, o grau é a soma do que entra e do que sai. 
+    # No grafo não direcionado, o grau é o número de vizinhos e + 1 se houver um laço (v,v), porque o laço conta 2 no grau (assim a soma dos graus é sempre 2m).
     def grau(self, v: No) -> int:
         if self.direcionado:
             return len(self._adj[v]) + len(self._pred[v])
@@ -111,41 +121,71 @@ class Grafo:
 
     # Listar nós e arestas:
 
+    # Devolve todos os nós (as chaves do dicionario de adjacêcia), na ordem de inserção
     def nos(self) -> Iterator[No]:
         return iter(self._adj)
 
+    # Devolve cada aresta como (origem, destino, peso), uma por vez (yield).
     def arestas(self) -> Iterator[tuple[No, No, float]]:
+        
+        # Direcionado: cada entrada do _adj é uma aresta diferente, então devolve todas.
         if self.direcionado:
+            
+            # Percorre o dicionario de adjacência e devolve um par chave-valor (v, vizinhos) para cada nó v.
             for v, vizinhos in self._adj.items():
+
+                # Percorre o dicionario de vizinhos da chave v e devolve um par chave-valor (w, peso).
                 for w, peso in vizinhos.items():
+
+                    # Devolve a aresta como uma tupla (origem, destino, peso). 
                     yield v, w, peso
-            return
+        
+            # Encerra aqui para não exercutar o não direcionado.
+            return 
+
+        # Não direcionado: cada aresta aparece duas vezes no dicionario de adjacência.
+        # "Vistos" é um conjunto que guarda os nós já percorridos.
         vistos: set[No] = set()
+        
+        # Percorre o dicionário de adjacência e devolve um par chave-valor (v, vizinhos) para cada nó v.
         for v, vizinhos in self._adj.items():
+
+            # Percorre o dicionário de vizinhos da chave v e devolve um par chave-valor (w, peso).
             for w, peso in vizinhos.items():
+
+                # Se w não estiver no conjunto de nós já percorridos, devolve a aresta como uma tupla (origem, destino, peso).
                 if w not in vistos:
                     yield v, w, peso
+            # Terminou de percorrer todos os vizinhos de v.
             vistos.add(v)
 
+    # Lista o número de nós (Quantidade de chaves no dicionário de adjacência).
     def numero_de_nos(self) -> int:
         return len(self._adj)
 
+    # Lista o número de arestas (Retorna o atributo _m, que é o contador de arestas inseridas).
     def numero_de_arestas(self) -> int:
         return self._m
 
-    @property
+
+    # Retorna o dicionário de adjacência do grafo, que é um atributo privado da classe.
+    @property 
     def adj(self) -> dict[No, dict[No, float]]:
         return self._adj
 
     
-    # Métodos especiais:
-
+    # Métodos especiais: Python chama sozinho quando a gente usa a sintaxe da linguagem.
+    
+    # Chamado por "len(g)": devolve o número de nós.
     def __len__(self) -> int: 
         return len(self._adj)
 
+    # Chamado por "v in g": diz se o nó existe no grafo.
     def __contains__(self, v: No) -> bool:
         return v in self._adj
 
+    # Chamado por "print(g)": mostra um resumo do grafo, ex: Grafo(não direcionado, n=34, m=78).
+    # Funciona como o toString() do Java.
     def __repr__(self) -> str:
         tipo = "direcionado" if self.direcionado else "não direcionado"
         return f"Grafo({tipo}, n={self.numero_de_nos()}, m={self.numero_de_arestas()})"
