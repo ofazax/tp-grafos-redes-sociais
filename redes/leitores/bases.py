@@ -82,7 +82,7 @@ def carregar_clubes_karate(caminho: str | Path = RAIZ / "tests/dados/karate_club
     return clubes
 
 
-def carregar_twitch_ptbr(pasta: str | RAIZ / "dados/brutos/twitch/PTBR") -> tuple[Grafo, dict[int, dict]]:
+def carregar_twitch_ptbr(pasta: str | Path = RAIZ / "dados/brutos/twitch/PTBR") -> tuple[Grafo, dict[int, dict]]:
     """Rede de streamers da Twitch em português e os atributos de cada streamer.
 
     Devolve (grafo, atributos). O grafo tem 1.912 nós e 31.299 arestas (amizade mútua, sem peso).
@@ -108,7 +108,8 @@ def carregar_twitch_ptbr(pasta: str | RAIZ / "dados/brutos/twitch/PTBR") -> tupl
         for linha in csv.DictReader(arquivo):
             no = int(linha["new_id"])
             atributos[no] = {
-                "visualizacoes": linha["partner"] == "True",
+                "visualizacoes": int(linha["views"]),
+                "parceiro": linha["partner"] == "True",
                 "adulto": linha["mature"] == "True",
                 "dias": int(linha["days"]),
             }

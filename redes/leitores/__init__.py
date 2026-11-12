@@ -17,4 +17,3 @@ __all__ = [
     "carregar_facebook",
     "carregar_thrones",
 ]
-
