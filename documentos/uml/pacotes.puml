@@ -1,0 +1,68 @@
+@startuml pacotes
+' Diagrama de pacotes: como os módulos do TP dependem uns dos outros (Frente 1, Etapa 1).
+' O detalhe da classe Grafo está em classes.puml.
+' Para gerar a imagem: extensão PlantUML do VS Code (Alt+D) ou
+'   java -jar plantuml.jar -tpng documentos/uml/pacotes.puml
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam ranksep 40
+skinparam nodesep 30
+hide empty members
+hide circle
+
+package "interface (Streamlit + Plotly)" as interface {
+  class "app.py e telas" as telas <<módulo>>
+}
+
+package "redes" as redes {
+  package "aplicacao" as aplicacao {
+    class "simular_sir\npoder_de_espalhamento\ncomparar_rankings" as f_aplicacao <<funções>>
+  }
+  package "comunidades" as comunidades {
+    class "modularidade\nlouvain\npropagacao_de_rotulos\nnmi, ari" as f_comunidades <<funções>>
+  }
+  package "visualizacao" as visualizacao {
+    class "fruchterman_reingold" as f_visualizacao <<função>>
+  }
+  package "metricas" as metricas {
+    class "grau, caminhos\nproximidade\ncentralidade\nnucleo_k\nagrupamento" as f_metricas <<módulos>>
+  }
+  package "leitores" as leitores {
+    class "carregar_karate\ncarregar_twitch_ptbr\ncarregar_facebook\ncarregar_thrones" as f_leitores <<funções>>
+  }
+  package "nucleo" as nucleo {
+    class Grafo
+    class IndexadorDeNos
+  }
+  package "geradores" as geradores {
+    class "erdos_renyi\nbarabasi_albert\nwatts_strogatz" as f_geradores <<funções>>
+  }
+}
+
+package "desempenho" as desempenho {
+  class "medir\ncomparar_networkx" as f_desempenho <<módulos>>
+}
+
+interface .down.> redes : chama as funções
+
+aplicacao .down.> metricas : rankings
+aplicacao .down.> leitores : visualizações reais
+comunidades .down.> nucleo : lê
+visualizacao .down.> nucleo : lê
+metricas .down.> nucleo : lê
+leitores .down.> nucleo : cria
+geradores .up.> nucleo : cria
+desempenho .up.> geradores : grafos de teste
+desempenho .up.> metricas : mede o tempo
+
+comunidades -[hidden]down- metricas
+visualizacao -[hidden]down- leitores
+
+note left of desempenho
+  Único lugar com
+  import networkx
+end note
+@enduml
