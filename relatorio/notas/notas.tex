@@ -1,0 +1,81 @@
+% =====================================================================
+% Notas de desenvolvimento do TP — base para o relatório SBC
+% Cada pessoa edita SÓ o próprio arquivo em secoes/ (evita conflito no Git).
+% Compilar: pdflatex notas && bibtex notas && pdflatex notas && pdflatex notas
+% (ou faça upload da pasta relatorio/notas/ no Overleaf)
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs,tabularx,array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{figuras/}}
+
+% ---------------------------------------------------------------------
+% Comandos do grupo (use em todas as seções)
+% ---------------------------------------------------------------------
+% Código, nomes de função e arquivos: \codigo{bfs}
+\newcommand{\codigo}[1]{\texttt{#1}}
+% Situação de cada item: \feito, \andamento, \afazer
+\newcommand{\feito}{\textcolor{green!50!black}{\textbf{feito}}}
+\newcommand{\andamento}{\textcolor{orange!80!black}{\textbf{em andamento}}}
+\newcommand{\afazer}{\textcolor{gray}{a fazer}}
+% Entrada no registro: \registro{AAAA-MM-DD}{o que foi feito; commit ou PR}
+\newcommand{\registro}[2]{\item[\textbf{#1}] #2}
+% Valor ainda não obtido, na coluna "Obtido" das tabelas: \falta
+\newcommand{\falta}{\textcolor{red!70!black}{\textbf{?}}}
+% Lembrete visível no PDF: \pendente{falta medir o tempo}
+\newcommand{\pendente}[1]{\textcolor{red!70!black}{[PENDENTE: #1]}}
+
+\title{TP Grafos --- Análise de Redes Sociais\\[2pt]
+       \large Notas de desenvolvimento (base para o relatório)}
+\author{Brunno, Vitória, Iago, Arthur, Ravi e Kaio}
+\date{Atualizado em \today}
+
+\begin{document}
+\maketitle
+
+\section*{Como usar este documento}
+
+\begin{itemize}[leftmargin=*]
+  \item Cada pessoa escreve \textbf{só no próprio arquivo} em \codigo{secoes/}. Assim ninguém
+        edita o mesmo arquivo ao mesmo tempo e o Git não gera conflito.
+  \item Atualize as notas \textbf{no mesmo PR do código}: implementou uma função, registre nas
+        notas antes de abrir o PR. Commit sugerido: \codigo{docs: atualiza notas da frente N}.
+  \item Escreva em frases completas, como no relatório. O texto daqui vai ser reaproveitado quase
+        sem mudança na seção de cada um.
+  \item Toda referência entra em \codigo{referencias.bib} e é citada com \codigo{\textbackslash cite\{chave\}}.
+        Figuras (gráficos, prints, diagramas) vão em \codigo{figuras/}.
+  \item Para valores numéricos, registre sempre \emph{obtido} e \emph{referência}, com a base e os parâmetros.
+        Os caminhos nas tabelas são relativos à pasta \codigo{redes/}.
+\end{itemize}
+
+\paragraph{Problema aplicado.} Identificar os influenciadores da rede da Twitch em português e
+verificar qual centralidade os encontra melhor, comparando cada ranking, pelo $\tau$ de Kendall,
+com o alcance numa simulação SIR e com as visualizações reais dos streamers~\cite{kitsak2010}.
+
+\paragraph{Restrição do enunciado.} É proibido usar bibliotecas prontas para criar ou processar o
+grafo, como o NetworkX, salvo para comparação de desempenho. No projeto, o NetworkX só aparece em
+\codigo{desempenho/}.
+
+\input{secoes/brunno}
+\input{secoes/vitoria}
+\input{secoes/iago}
+\input{secoes/arthur}
+\input{secoes/ravi}
+\input{secoes/kaio}
+
+\bibliographystyle{plain}
+\bibliography{referencias}
+
+\end{document}

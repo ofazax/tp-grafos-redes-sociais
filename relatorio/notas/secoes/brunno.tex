@@ -1,0 +1,124 @@
+% =====================================================================
+% Frente 1 --- Estrutura e dados (Brunno)
+% =====================================================================
+\section{Frente 1 --- Estrutura do grafo e dados}
+
+\noindent\textbf{Responsável:} Brunno.
+\textbf{No relatório:} introdução; bases e modelagem; responsabilidades; revisão final.
+\textbf{Na Etapa 1:} justificativa da modelagem, diagrama de classes e montagem do documento.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Função / classe & Arquivo & Complexidade & Situação \\
+\midrule
+\codigo{Grafo} & \codigo{nucleo/grafo.py} & inserir nó, inserir ou remover aresta e testar aresta: $O(1)$ médio; \codigo{arestas()}: $O(n+m)$; memória $O(n+m)$ & \feito \\
+\codigo{IndexadorDeNos} & \codigo{nucleo/indexador.py} & $O(n)$ & \feito \\
+\codigo{para\_listas\_indexadas} & \codigo{nucleo/indexador.py} & $O(n+m)$ & \feito \\
+\codigo{carregar\_karate}, \codigo{carregar\_clubes\_karate} & \codigo{leitores/bases.py} & $O(m)$ & \feito \\
+\codigo{carregar\_twitch\_ptbr} & \codigo{leitores/bases.py} & $O(n+m)$ & \feito \\
+\codigo{carregar\_facebook}, \codigo{carregar\_thrones} & \codigo{leitores/bases.py} & $O(m)$ & \feito \\
+\codigo{erdos\_renyi} & \codigo{geradores/modelos.py} & $O(n+m)$~\cite{batagelj2005} & \feito \\
+\codigo{barabasi\_albert} & \codigo{geradores/modelos.py} & $O(n \cdot m)$ esperado~\cite{barabasi1999} & \feito \\
+\codigo{watts\_strogatz} & \codigo{geradores/modelos.py} & $O(n \cdot k)$ esperado~\cite{watts1998} & \feito \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Decisões e justificativas}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Lista de adjacência, e não matriz.} As redes sociais são esparsas: na Twitch PT,
+        a densidade é $2m/(n(n-1)) \approx 0{,}017$, ou seja, uma matriz teria 98\% de zeros.
+        A lista ocupa $O(n+m)$ de memória, contra $O(n^2)$ da matriz (3,6 milhões de células só na
+        Twitch PT), e a BFS custa $\Theta(n+m)$ com lista e $\Theta(n^2)$ com
+        matriz~\cite{cormen2022,sedgewick2011}.
+  \item \textbf{Dicionário de dicionários} (\codigo{\_adj[v][w] = peso}). Testar se uma aresta existe
+        custa $O(1)$ em média~\cite{pythoncomplexidade}, e o peso fica junto do vizinho. O peso é
+        necessário na Network of Thrones e no Louvain, que cria laços com peso ao agregar
+        comunidades~\cite{blondel2008}. O NetworkX usa a mesma estrutura pelos mesmos
+        motivos~\cite{hagberg2008}.
+  \item \textbf{Predecessores (\codigo{\_pred}) no grafo direcionado}, para o grau de entrada e o
+        PageRank, que soma sobre as arestas que chegam em cada nó~\cite{brin1998}. No não
+        direcionado, \codigo{\_pred} é o próprio \codigo{\_adj}, sem cópia.
+  \item \textbf{Contador de arestas} \codigo{\_m}: \codigo{numero\_de\_arestas()} em $O(1)$, usado na
+        densidade, no grau médio e na modularidade.
+  \item \textbf{Laços:} aceitos na classe (o Louvain precisa) e descartados pelos leitores. O laço
+        conta 2 no grau, para a soma dos graus ser sempre $2m$; o NetworkX 3.7 segue a mesma convenção.
+  \item \textbf{\codigo{\_\_slots\_\_}} para economizar memória por objeto; \codigo{vizinhos()} devolve
+        um iterador e \codigo{arestas()} é um gerador, para não copiar listas.
+  \item \textbf{Reindexação $0..n-1$:} algoritmos pesados (Brandes, PageRank) usam listas indexadas
+        por inteiro, de menor custo constante que dicionários. \pendente{medir dict vs. lista indexada
+        numa BFS para sustentar essa afirmação}
+  \item \textbf{Nomes:} vértices \codigo{v} (origem) e \codigo{w} (destino), como em~\cite{sedgewick2011};
+        código e pastas em português.
+  \item \textbf{Remoção de aresta:} \codigo{remover\_aresta(v, w)} confere se a aresta existe antes de
+        apagar (senão lança \codigo{KeyError} e o grafo fica intacto), apaga os dois sentidos e
+        decrementa o contador. Os nós continuam no grafo. Quem usa é o Watts--Strogatz.
+  \item \textbf{Leitores:} os caminhos padrão partem da raiz do repositório (\codigo{RAIZ}), para
+        funcionar de qualquer pasta; todos descartam laços. Na Twitch, os atributos se ligam aos nós
+        pela coluna \codigo{new\_id} (a coluna \codigo{id} é o ID original e não aparece nas arestas).
+        O CSV da Network of Thrones separa as linhas só com \codigo{\textbackslash r}, por isso é
+        aberto com \codigo{newline=""}. Karate e ego-Facebook têm o mesmo formato (\codigo{v w} por
+        linha) e usam a mesma função auxiliar.
+  \item \textbf{Geradores:} todos recebem \codigo{semente} e usam \codigo{random.Random(semente)}, nunca o
+        \codigo{random} global, para o grafo se repetir. O Erdős--Rényi pula direto para o próximo par
+        sorteado (pulo geométrico), em $O(n+m)$ em vez de $O(n^2)$~\cite{batagelj2005}. O
+        Barabási--Albert sorteia numa lista em que cada nó aparece uma vez por aresta, o que já dá
+        chance proporcional ao grau; o total é $m(n-m)$ arestas. O Watts--Strogatz monta o anel e
+        religa cada aresta com probabilidade $p$, sem criar laço nem aresta repetida; o total
+        continua $n k / 2$.
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+Grafo completo $K_5$: arestas e grau de cada nó & sintético & 10 e 4 & $n(n-1)/2 = 10$ e $n-1 = 4$ \\
+Soma dos graus $= 2m$ (Hypothesis, grafos aleatórios com laços) & sintético & passou & lema do aperto de mãos \\
+Entradas $=$ saídas $= m$ no direcionado (Hypothesis) & sintético & passou & --- \\
+Nós e arestas & Karate & 34 e 78 & 34 e 78~\cite{zachary1977} \\
+Nós e arestas & Twitch PT & 1.912 e 31.299 & 1.912 e 31.299~\cite{rozemberczki2021} \\
+Parceiros (\codigo{partner}) & Twitch PT & 279 & 279 \\
+Nós e arestas & ego-Facebook & 4.039 e 88.234 & 4.039 e 88.234~\cite{mcauley2012} \\
+Nós e arestas; grau do Tyrion & Network of Thrones (livro 3) & 303 e 1.008; 59 & 303 e 1.008 (arquivo usado) \\
+Mesmas arestas que o NetworkX lendo o mesmo arquivo & as 4 bases & iguais & --- \\
+ER com $p = 0$ e $p = 1$ & sintético & 0 e $n(n-1)/2$ & vazio e completo \\
+ER com $n = 1.000$, $p = 0{,}01$, \codigo{semente=1} & sintético & 4.963 & 4.995 esperado ($\pm 5\%$) \\
+BA com $n = 1.000$, $m = 3$ & sintético & 2.991, conexo & $m(n - m) = 2.991$ \\
+WS com $n = 1.000$, $k = 4$ e $p \in \{0{,}1;\ 0{,}5;\ 1\}$ & sintético & 2.000 & $n k / 2 = 2.000$ \\
+Mesma \codigo{semente} repete o grafo (ER, BA e WS) & sintético & passou & --- \\
+Remover todas as arestas deixa $m = 0$ e os nós (Hypothesis) & sintético & passou & --- \\
+\bottomrule
+\end{tabularx}}
+
+\medskip
+\noindent Observação para o relatório: o artigo da Network of Thrones~\cite{beveridge2016} cita
+107 personagens e 353 arestas no livro 3; o arquivo do repositório dos autores tem 303 nós e
+1.008 arestas. Citar os números do arquivo usado.
+
+\subsection{Figuras e tabelas para o relatório}
+\begin{itemize}[leftmargin=*]
+  \item Diagramas de classes (núcleo) e de pacotes, em \codigo{documentos/uml/} (PlantUML e PNG). \feito
+  \item Tabela das 4 bases (nós, arestas, densidade e papel), no documento da Etapa 1. \feito
+\end{itemize}
+
+\subsection{Limitações e pendências}
+\begin{itemize}[leftmargin=*]
+  \item O Barabási--Albert começa com $m$ nós isolados (como no modelo original); o primeiro nó novo
+        se liga a todos eles, e o grafo final é conexo.
+  \item Exportar o grafo e os resultados em JSON para a interface, se o Kaio precisar. \afazer
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{2026-11-06}{Classe \codigo{Grafo}, reindexação e 13 testes (PR \#2).}
+  \registro{2026-11-09}{Nomes do código e das pastas traduzidos para português (PR \#3).}
+  \registro{2026-11-10}{Classe reescrita e comentada; vértices padronizados como \codigo{v} e \codigo{w} (PR \#4). 21 testes passando.}
+  \registro{2026-11-11}{Notas de desenvolvimento em LaTeX para o grupo (este documento).}
+  \registro{2026-11-12}{Leitores das quatro bases e 8 testes, com os tamanhos conferidos nos arquivos reais (branch \codigo{feat/leitores}).}
+  \registro{2026-11-12}{\codigo{remover\_aresta} na classe \codigo{Grafo}; geradores ER, BA e WS; 20 testes novos (branch \codigo{feat/geradores}). 49 testes passando.}
+  \registro{2026-11-12}{Diagramas de classes e de pacotes; documento da Etapa 1 com bases, modelagem e responsabilidades (branch \codigo{docs/etapa1}).}
+\end{description}

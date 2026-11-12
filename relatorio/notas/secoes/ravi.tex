@@ -1,0 +1,59 @@
+% =====================================================================
+% Frente 5 --- Influenciadores (Ravi)
+% =====================================================================
+\section{Frente 5 --- Influenciadores}
+
+\noindent\textbf{Responsável:} Ravi.
+\textbf{No relatório:} problema aplicado e resultados dos influenciadores; referências em BibTeX.
+\textbf{Na Etapa 1:} descrição formal do problema aplicado.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Função & Arquivo & Complexidade & Situação \\
+\midrule
+\codigo{limiar\_epidemico} & \codigo{aplicacao/influencia.py} & $O(n)$ & \afazer \\
+\codigo{simular\_sir} & \codigo{aplicacao/influencia.py} & \falta & \afazer \\
+\codigo{poder\_de\_espalhamento} & \codigo{aplicacao/influencia.py} & \falta & \afazer \\
+\codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n^2)$ ingênuo~\cite{kendall1938} & \afazer \\
+\codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & --- & \afazer \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Problema aplicado}
+\pendente{a pergunta, a entrada, a saída e como validar --- texto da descrição formal da Etapa 1}
+
+\subsection{Decisões e justificativas}
+\begin{itemize}[leftmargin=*]
+  \item SIR em tempo discreto, com $\beta$ um pouco acima do limiar epidêmico (0,0079 na Twitch PT),
+        por exemplo 0,012, e $\gamma = 1$, seguindo~\cite{kitsak2010}. \pendente{confirmar os valores usados}
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+SIR com $\beta = 0$ atinge só os iniciais; $\beta = \gamma = 1$ num conexo atinge todos & sintético & \falta & --- \\
+Kendall de rankings iguais e invertidos & sintético & \falta & 1 e $-1$ \\
+Limiar epidêmico & Twitch PT & \falta & 0,0079 \\
+$\tau$ entre grau e visualizações & Twitch PT & \falta & $\approx$ 0,43 (NetworkX) \\
+$\tau$ entre PageRank / k-core e visualizações & Twitch PT & \falta & $\approx$ 0,44 / 0,40 \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Resultados}
+\pendente{tabela com o $\tau$ de cada centralidade contra o alcance SIR e contra as visualizações;
+o k-core prevê os espalhadores melhor que o grau?}
+
+\subsection{Limitações e pendências}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: custo do SIR por Monte Carlo; número de rodadas usado}
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+\end{description}

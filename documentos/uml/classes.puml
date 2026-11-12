@@ -1,0 +1,73 @@
+@startuml classes
+' Diagrama de classes do núcleo (redes/nucleo), Frente 1, Etapa 1.
+' A visão geral dos pacotes está em pacotes.puml.
+' Para gerar a imagem: extensão PlantUML do VS Code (Alt+D) ou
+'   java -jar plantuml.jar -tpng documentos/uml/classes.puml
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+hide empty members
+hide circle
+
+class Grafo {
+  +direcionado: bool
+  -_adj: dict[No, dict[No, float]]
+  -_pred: dict[No, dict[No, float]]
+  -_m: int
+  ..construção..
+  +adicionar_no(v)
+  +adicionar_aresta(v, w, peso = 1.0)
+  +remover_aresta(v, w)
+  +{static} de_arestas(arestas, direcionado): Grafo
+  ..consulta..
+  +tem_no(v): bool
+  +tem_aresta(v, w): bool
+  +peso(v, w): float
+  +vizinhos(v): Iterator[No]
+  +predecessores(v): Iterator[No]
+  +grau(v): int
+  +grau_entrada(v): int
+  +grau_saida(v): int
+  ..listagem..
+  +nos(): Iterator[No]
+  +arestas(): Iterator[(v, w, peso)]
+  +numero_de_nos(): int
+  +numero_de_arestas(): int
+  +adj: dict {somente leitura}
+}
+
+class IndexadorDeNos {
+  +para_no: list[No]
+  +para_indice: dict[No, int]
+  +IndexadorDeNos(g: Grafo)
+}
+
+class indexador <<módulo>> {
+  +para_listas_indexadas(g: Grafo):
+  \t(IndexadorDeNos, list[list[int]])
+}
+
+note right of Grafo
+  <b>Lista de adjacência</b> em
+  dicionário de dicionários:
+  _adj[v][w] = peso.
+  Memória O(n + m); inserir,
+  remover e testar aresta em O(1).
+  No não direcionado, _pred
+  é o próprio _adj.
+  No = qualquer valor imutável
+  (int ou str).
+end note
+
+IndexadorDeNos ..> Grafo : lê os nós
+indexador ..> IndexadorDeNos : cria
+indexador ..> Grafo : lê os vizinhos
+
+note bottom of IndexadorDeNos
+  Renumera os nós de 0 a n-1
+  para os algoritmos pesados
+  (Brandes, PageRank).
+end note
+@enduml
