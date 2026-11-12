@@ -1,4 +1,7 @@
 """Testes da classe Grafo: casos de resposta conhecida e invariantes."""
+
+import pytest
+
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -101,3 +104,47 @@ def test_direcionado_entrada_igual_saida(lista):
     total_saida = sum(g.grau_saida(v) for v in g.nos())
     total_entrada = sum(g.grau_entrada(v) for v in g.nos())
     assert total_saida == total_entrada == g.numero_de_arestas()
+
+
+def test_remover_aresta_nao_direcionado():
+    g = Grafo.de_arestas([(1, 2), (2, 3)])
+    g.remover_aresta(2, 1)
+    assert not g.tem_aresta(1, 2) and not g.tem_aresta(2, 1)
+    assert g.numero_de_arestas() == 1
+    assert g.numero_de_nos() == 3  # os nós continuam no grafo
+    assert g.grau(1) == 0
+
+
+def test_remover_aresta_direcionado():
+    g = Grafo.de_arestas([(1, 2), (2, 1)], direcionado=True)
+    g.remover_aresta(1, 2)
+    assert not g.tem_aresta(1, 2)
+    assert g.tem_aresta(2, 1)  # o sentido contrário é outra aresta
+    assert list(g.predecessores(2)) == []
+    assert g.grau_entrada(2) == 0
+    assert g.numero_de_arestas() == 1
+
+
+def test_remover_laco():
+    g = Grafo.de_arestas([(5, 5), (5, 6)])
+    g.remover_aresta(5, 5)
+    assert g.grau(5) == 1
+    assert g.numero_de_arestas() == 1
+
+
+def test_remover_aresta_inexistente():
+    g = Grafo.de_arestas([(1, 2)])
+    with pytest.raises(KeyError):
+        g.remover_aresta(1, 3)
+    assert g.numero_de_arestas() == 1  # nada mudou
+
+
+@given(listas_de_arestas)
+def test_remover_todas_as_arestas(lista):
+    g = Grafo.de_arestas(lista)
+    n = g.numero_de_nos()
+    for v, w, _ in list(g.arestas()):  # list(): não dá para apagar enquanto percorre
+        g.remover_aresta(v, w)
+    assert g.numero_de_arestas() == 0
+    assert g.numero_de_nos() == n
+    assert all(g.grau(v) == 0 for v in g.nos())
