@@ -1,0 +1,64 @@
+% =====================================================================
+% Documento da Etapa 1 --- Modelagem e Planejamento da Solução
+% Template oficial da SBC (sbc-template.sty e sbc.bst estão nesta pasta).
+% Cada pessoa edita SÓ a própria seção em secoes/ (veja o README.md).
+% Compilar: pdflatex etapa1 && bibtex etapa1 && pdflatex etapa1 && pdflatex etapa1
+% Antes de entregar, não pode sobrar nenhum \pendente{...} (aparece em vermelho no PDF).
+% =====================================================================
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{amsmath}
+\usepackage{booktabs,tabularx,array}
+\usepackage{xcolor}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\graphicspath{{figuras/}}
+
+% Código e nomes de função: \codigo{bfs}
+\newcommand{\codigo}[1]{\texttt{#1}}
+% Lembrete em vermelho; nenhum pode sobrar na versão entregue.
+\newcommand{\pendente}[1]{\textcolor{red}{[PENDENTE: #1]}}
+
+\sloppy
+
+\title{Identificação de influenciadores na rede da Twitch em português:\\
+       modelagem e planejamento (Etapa 1)}
+
+% Completar os nomes completos de todos (como no Canvas) e trocar os Sobrenome em vermelho.
+\author{Brunno Enrico Machado Costa\inst{1}, Vitória Rani Santos Menezes\inst{1}, Kaio Ferreira\inst{1},\\
+  Iago \textcolor{red}{Sobrenome}\inst{1}, Arthur \textcolor{red}{Sobrenome}\inst{1}, Ravi \textcolor{red}{Sobrenome}\inst{1}}
+
+\address{\pendente{curso, disciplina e instituição}}
+
+\begin{document}
+
+\maketitle
+
+\begin{resumo}
+  Este documento apresenta a modelagem e o planejamento de uma ferramenta, escrita em
+  Python puro, que analisa redes sociais com grafos. O problema aplicado é identificar os
+  influenciadores da rede de streamers da Twitch em português (1.912 nós e 31.299 arestas)
+  e verificar qual medida de centralidade os encontra melhor, comparando cada ranking com o
+  alcance numa simulação de espalhamento SIR e com as visualizações reais dos canais.
+  Descrevemos o problema, as quatro bases de dados, a modelagem do grafo em lista de
+  adjacência, os diagramas UML e o plano de desenvolvimento até a entrega final.
+\end{resumo}
+
+\input{secoes/problema}       % Ravi
+\input{secoes/bases}          % Brunno
+\input{secoes/modelagem}      % Brunno
+\input{secoes/casos_de_uso}   % Kaio
+\input{secoes/sequencia}      % Iago
+\input{secoes/atividades}     % Arthur
+\input{secoes/plano}          % Vitória
+\input{secoes/responsabilidades} % Brunno
+
+\bibliographystyle{sbc}
+\bibliography{referencias}
+
+\end{document}

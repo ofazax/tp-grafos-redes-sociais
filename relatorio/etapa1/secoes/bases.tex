@@ -1,0 +1,46 @@
+% =====================================================================
+% Bases de dados --- Brunno (Frente 1)
+% =====================================================================
+\section{Bases de dados}\label{sec:bases}
+
+Usamos quatro redes públicas e já anonimizadas, baixadas das fontes originais. Por serem
+arquivos fixos, os experimentos podem ser repetidos por qualquer pessoa. A Tabela~\ref{tab:bases}
+resume as bases; os tamanhos foram conferidos pelos testes automáticos dos leitores
+(\codigo{tests/test\_leitores.py}).
+
+\begin{table}[htbp]
+\centering
+\caption{Bases de dados usadas no trabalho: $n$ nós, $m$ arestas e densidade $2m/(n(n-1))$.}
+\label{tab:bases}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.3cm} r r r Y@{}}
+\toprule
+Base & $n$ & $m$ & Densidade & Papel no trabalho \\
+\midrule
+Twitch PT & 1.912 & 31.299 & 0,0171 & Base principal: ranking de influenciadores \\
+ego-Facebook & 4.039 & 88.234 & 0,0108 & Segunda rede real, maior: desempenho \\
+Network of Thrones (livro 3) & 303 & 1.008 & 0,0220 & Demonstração (rede com peso) \\
+Karate Club & 34 & 78 & 0,1390 & Testes de corretude (valores publicados) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Twitch PT.} Rede de amizades mútuas entre streamers que transmitem em português,
+coletada por \cite{rozemberczki2021} e distribuída pelo SNAP~\cite{leskovec2014snap}. Cada nó
+traz atributos reais: número de visualizações, se o canal é parceiro da Twitch (279 dos 1.912),
+se tem conteúdo adulto e há quantos dias existe. As visualizações servem de validação externa
+para o ranking de influenciadores.
+
+\paragraph{ego-Facebook.} União de dez redes ego de amizades do Facebook, com os
+identificadores anonimizados~\cite{mcauley2012}. É maior e mais densa em triângulos que a
+Twitch PT, o que a torna boa para medir o desempenho dos algoritmos.
+
+\paragraph{Network of Thrones.} Personagens do terceiro livro de \emph{As Crônicas de Gelo e
+Fogo}; dois personagens se ligam quando os nomes aparecem a até 15 palavras um do outro, e o peso
+é o número de vezes em que isso acontece~\cite{beveridge2016}. Usamos o arquivo do repositório
+dos autores, com 303 personagens e 1.008 arestas (o artigo original cita uma versão menor).
+Como o público reconhece os personagens, a rede é ótima para a demonstração.
+
+\paragraph{Karate Club.} Clube de caratê estudado por \cite{zachary1977}, que se dividiu em
+dois grupos (17 membros cada). Os valores conhecidos dessa rede, como o agrupamento médio de
+0,5706 e a modularidade máxima de 0,4198, servem para provar que os algoritmos estão corretos.
