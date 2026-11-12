@@ -1,0 +1,59 @@
+% =====================================================================
+% Frente 6 --- Interface e visualização (Kaio)
+% =====================================================================
+\section{Frente 6 --- Interface e visualização}
+
+\noindent\textbf{Responsável:} Kaio.
+\textbf{No relatório:} interface; conclusão.
+\textbf{Na Etapa 1:} diagrama de casos de uso e esboço das telas.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Item & Arquivo & Complexidade / observação & Situação \\
+\midrule
+Diagrama de casos de uso & \codigo{documentos/uml/} & 17 casos de uso & \andamento \\
+\codigo{fruchterman\_reingold} & \codigo{visualizacao/}\newline\codigo{posicionamento.py} & $O(n^2)$ por iteração~\cite{fruchterman1991} & \afazer \\
+Tela: visão geral & \codigo{interface/} & --- & \afazer \\
+Tela: rede & \codigo{interface/} & --- & \afazer \\
+Tela: centralidades & \codigo{interface/} & --- & \afazer \\
+Tela: comunidades & \codigo{interface/} & --- & \afazer \\
+Tela: influenciadores & \codigo{interface/} & --- & \afazer \\
+Tela: desempenho & \codigo{interface/} & --- & \afazer \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Decisões e justificativas}
+\begin{itemize}[leftmargin=*]
+  \item Streamlit para as telas e Plotly para os gráficos; a interface só exibe resultados
+        calculados pelo nosso código. \pendente{completar}
+  \item \pendente{ex.: \codigo{st.cache\_resource} para grafos e \codigo{st.cache\_data} para resultados}
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+Posição para todos os nós, sem valores inválidos & sintético & \falta & --- \\
+Mesma \codigo{semente} repete o layout & sintético & \falta & --- \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Figuras e tabelas para o relatório}
+\begin{itemize}[leftmargin=*]
+  \item Diagrama de casos de uso (\codigo{documentos/uml/casos\_de\_uso.jpg}).
+  \item \pendente{prints das 6 telas}
+\end{itemize}
+
+\subsection{Limitações e pendências}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: redes grandes desenhadas só com top-$k$ ou k-core}
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{2026-11-10}{Diagrama de casos de uso em PlantUML e descrição dos casos de uso (PR \#5, em revisão).}
+\end{description}

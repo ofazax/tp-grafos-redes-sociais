@@ -1,0 +1,67 @@
+% =====================================================================
+% Frente 3 --- Centralidades e desempenho (Iago)
+% =====================================================================
+\section{Frente 3 --- Centralidades e desempenho}
+
+\noindent\textbf{Responsável:} Iago.
+\textbf{No relatório:} centralidades; avaliação de desempenho.
+\textbf{Na Etapa 1:} diagrama de sequência.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Função & Arquivo & Complexidade & Situação \\
+\midrule
+\codigo{intermediacao} (exata) & \codigo{metricas/centralidade.py} & $O(nm)$~\cite{brandes2001} & \afazer \\
+\codigo{intermediacao} ($k$ fontes) & \codigo{metricas/centralidade.py} & $O(km)$ & \afazer \\
+\codigo{pagerank} & \codigo{metricas/centralidade.py} & $O(m)$ por iteração~\cite{brin1998} & \afazer \\
+\codigo{numero\_de\_nucleo}, \codigo{k\_nucleo} & \codigo{metricas/nucleo\_k.py} & $O(m)$~\cite{batagelj2003} & \afazer \\
+\codigo{medir.py} (tempo, memória, TEPS) & \codigo{desempenho/} & --- & \afazer \\
+\codigo{comparar\_networkx.py} & \codigo{desempenho/} & --- & \afazer \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Decisões e justificativas}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: listas indexadas $0..n-1$ no Brandes e no PageRank}
+  \item \pendente{ex.: nós sem vizinhos repartem o PageRank entre todos os nós}
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+Betweenness normalizada dos nós 0, 33 e 32 & Karate & \falta & 0,4376; 0,3041; 0,1452 \\
+PageRank ($d = 0{,}85$) dos nós 33, 0 e 32; soma & Karate & \falta & 0,1009; 0,097; 0,0717; 1 \\
+Núcleo máximo & Karate & \falta & 4 (nós 0, 1, 2, 3, 7, 8, 13, 30, 32, 33) \\
+Betweenness e PageRank máximos & Twitch PT & \falta & nó 127 (0,0993 e 0,0119) \\
+Núcleo máximo & Twitch PT & \falta & 37, com 154 nós \\
+Centro da estrela; grafo completo & sintético & \falta & $(n-1)(n-2)/2$; 0 \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Desempenho}
+\begin{itemize}[leftmargin=*]
+  \item Ambiente: \pendente{CPU, RAM, sistema, versão do Python e do NetworkX}
+  \item Metodologia: mediana de 5 execuções com \codigo{time.perf\_counter}; pico de memória com
+        \codigo{tracemalloc}; grafos ER, BA e WS de $10^3$ a $10^5$ nós e as 4 bases.
+  \item Resultados: \pendente{tabela nosso código vs. NetworkX; inclinação do log-log}
+\end{itemize}
+
+\subsection{Figuras e tabelas para o relatório}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{gráfico log-log de tempo $\times$ $(n+m)$, com retas $O(n+m)$ e $O(nm)$}
+\end{itemize}
+
+\subsection{Limitações e pendências}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: betweenness exata inviável em grafos grandes; usar amostragem~\cite{brandes2007}}
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+\end{description}

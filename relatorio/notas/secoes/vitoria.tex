@@ -1,0 +1,60 @@
+% =====================================================================
+% Frente 2 --- Caminhos e proximidade (Vitória)
+% =====================================================================
+\section{Frente 2 --- Grau, caminhos e proximidade}
+
+\noindent\textbf{Responsável:} Vitória.
+\textbf{No relatório:} trabalhos relacionados; caminhos e proximidade.
+\textbf{Na Etapa 1:} plano de desenvolvimento com os marcos.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Função & Arquivo & Complexidade & Situação \\
+\midrule
+\codigo{centralidade\_de\_grau}, \codigo{distribuicao\_de\_graus} & \codigo{metricas/grau.py} & $O(n)$ & \andamento \\
+\codigo{densidade}, \codigo{grau\_medio} & \codigo{metricas/grau.py} & $O(1)$ & \andamento \\
+\codigo{bfs}, \codigo{ordem\_dfs} & \codigo{metricas/caminhos.py} & $O(n+m)$ & \afazer \\
+\codigo{componentes\_conexas} & \codigo{metricas/caminhos.py} & $O(n+m)$ & \afazer \\
+\codigo{dijkstra} & \codigo{metricas/caminhos.py} & $O((n+m)\log n)$~\cite{dijkstra1959} & \afazer \\
+\codigo{distancia\_media}, \codigo{diametro} & \codigo{metricas/caminhos.py} & $O(n(n+m))$ & \afazer \\
+\codigo{proximidade}, \codigo{harmonica} & \codigo{metricas/proximidade.py} & $O(n(n+m))$~\cite{boldi2014} & \afazer \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Decisões e justificativas}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: BFS com \codigo{collections.deque}, porque \codigo{list.pop(0)} custa $O(n)$}
+  \item \pendente{ex.: DFS iterativa, porque o limite de recursão do Python estoura em caminhos longos}
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+Densidade, grau médio e grau máximo & Karate & \falta & 0,139; 4,588; 17 \\
+Distância média e diâmetro & Karate & \falta & 2,4082 e 5 \\
+Closeness dos nós 0, 2 e 33 & Karate & \falta & 0,569; 0,5593; 0,55 \\
+Harmônica dos nós 33 e 0 & Karate & \falta & 23,25 e 23,167 \\
+Componentes, distância média e diâmetro & Twitch PT & \falta & 1; 2,5324; 7 \\
+Closeness máxima & Twitch PT & \falta & nó 127 (0,6009) \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Figuras e tabelas para o relatório}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: histograma da distribuição de graus da Twitch PT}
+\end{itemize}
+
+\subsection{Limitações e pendências}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: distância média exata inviável no ego-Facebook; usar amostra de origens}
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{2026-11-11}{Métricas de grau e 13 testes (PR \#6, em revisão).}
+\end{description}

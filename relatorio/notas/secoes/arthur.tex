@@ -1,0 +1,61 @@
+% =====================================================================
+% Frente 4 --- Agrupamento e comunidades (Arthur)
+% =====================================================================
+\section{Frente 4 --- Agrupamento e comunidades}
+
+\noindent\textbf{Responsável:} Arthur.
+\textbf{No relatório:} comunidades; limitações e ética.
+\textbf{Na Etapa 1:} diagrama de atividades do Louvain.
+
+\subsection{O que foi implementado}
+
+{\small\begin{tabularx}{\linewidth}{@{}L{3.9cm} L{4.7cm} Y L{1.9cm}@{}}
+\toprule
+Função & Arquivo & Complexidade & Situação \\
+\midrule
+\codigo{triangulos} & \codigo{metricas/agrupamento.py} & $O(m^{1,5})$~\cite{schank2005} & \afazer \\
+\codigo{agrupamento\_local}, \codigo{agrupamento\_medio} & \codigo{metricas/agrupamento.py} & \falta & \afazer \\
+\codigo{transitividade} & \codigo{metricas/agrupamento.py} & \falta & \afazer \\
+\codigo{modularidade} & \codigo{comunidades/} & $O(m)$~\cite{newman2004} & \afazer \\
+\codigo{louvain} & \codigo{comunidades/} & $\approx O(m)$ por passada~\cite{blondel2008} & \afazer \\
+\codigo{propagacao\_de\_rotulos} & \codigo{comunidades/} & $O(m)$ por iteração~\cite{raghavan2007} & \afazer \\
+\codigo{nmi}, \codigo{ari} & \codigo{comunidades/} & \pendente{} ~\cite{danon2005,hubert1985} & \afazer \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Decisões e justificativas}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: fórmula do ganho de modularidade usada no Louvain}
+\end{itemize}
+
+\subsection{Corretude: testes e resultados}
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{2.5cm} L{2.2cm} L{3.8cm}@{}}
+\toprule
+Teste & Base & Obtido & Referência \\
+\midrule
+Clustering médio, transitividade e triângulos & Karate & \falta & 0,5706; 0,2557; 45 \\
+Modularidade do Louvain & Karate & \falta & entre 0,39 e 0,42 (máximo 0,4198) \\
+Modularidade da divisão real (gabarito) & Karate & \falta & 0,3582 \\
+Clustering médio, transitividade e triângulos & Twitch PT & \falta & 0,3199; 0,131; 173.510 \\
+Louvain & Twitch PT & \falta & 0,286 a 0,296 ($\approx$ 7 comunidades) \\
+Clustering médio, transitividade e triângulos & ego-Facebook & \falta & 0,6055; 0,5192; 1.612.010 \\
+NMI e ARI de partições iguais & sintético & \falta & 1 e 1 \\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Figuras e tabelas para o relatório}
+\begin{itemize}[leftmargin=*]
+  \item \pendente{ex.: diagrama de atividades do Louvain; Karate colorido por comunidade}
+\end{itemize}
+
+\subsection{Limitações, ética e pendências}
+\begin{itemize}[leftmargin=*]
+  \item Limite de resolução da modularidade~\cite{fortunato2007}. \pendente{discutir}
+  \item LGPD e anonimização dos dados. \pendente{discutir}
+\end{itemize}
+
+\subsection{Registro}
+\begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+\end{description}
