@@ -1,0 +1,95 @@
+@startuml sequencia
+' Diagrama de sequência: o usuário pede o ranking de influenciadores (Frente 3, Etapa 1).
+' Fluxo: usuário -> interface -> centralidades -> grafo.
+' Para gerar a imagem: extensão PlantUML do VS Code (Alt+D) ou
+'   java -jar plantuml.jar -tpng documentos/uml/sequencia.puml
+' A fonte é a Inter; sem ela instalada, o PlantUML usa a fonte padrão.
+
+' teoz: motor de layout que posiciona as caixas de loop sem sobrepor os rótulos.
+!pragma teoz true
+
+' ---------------------------------------------------------------------
+' Estilo: cores pastel por papel, caixas sem borda, linhas cinza finas.
+'   rosa     = quem está fora do sistema (usuário)
+'   verde    = interface
+'   azul     = núcleo do diagrama (centralidades, Frente 3)
+'   amarelo  = dados (grafo)
+' ---------------------------------------------------------------------
+skinparam dpi 180
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Inter
+skinparam defaultFontSize 13
+skinparam defaultFontColor #2B2B2B
+skinparam RoundCorner 14
+skinparam sequenceMessageAlign center
+
+skinparam sequence {
+  ArrowColor #707070
+  ArrowThickness 1.6
+  LifeLineBorderColor #9A9A9A
+  ParticipantBorderThickness 0
+  ParticipantFontSize 14
+  ' Espaço extra entre as colunas, para nenhum rótulo encostar na ponta da seta.
+  ParticipantPadding 60
+  GroupBorderColor #8E8E8E
+  GroupBorderThickness 1.6
+  GroupBackgroundColor #F1F1F1
+  GroupHeaderFontColor #555555
+  GroupFontColor #555555
+}
+skinparam note {
+  BackgroundColor #F4F4F4
+  BorderColor #F4F4F4
+  FontColor #555555
+}
+
+' Linhas de vida mais grossas (no teoz, a espessura só funciona por aqui, não por skinparam).
+' O usuário tem cantos bem arredondados (formato de pílula), como os elementos externos.
+<style>
+sequenceDiagram {
+  lifeLine {
+    LineThickness 1.6
+  }
+  .externo {
+    RoundCorner 40
+  }
+}
+</style>
+
+hide footbox
+hide stereotype
+autonumber
+
+participant "Usuário\n<size:11><color:#5F5F5F>analista</color></size>" as U <<externo>> #FDB9B1
+participant "Interface\n<size:11><color:#5F5F5F>Streamlit</color></size>" as I #99EDC9
+participant "<b>Centralidades</b>\n<size:11><color:#5F5F5F>metricas.centralidade</color></size>" as C #AECAF9
+participant "Grafo\n<size:11><color:#5F5F5F>nucleo.grafo</color></size>" as G #FBE4A8
+
+note across : Pré-condição: a base escolhida já foi carregada em um Grafo g
+
+U -> I : pede o ranking\nde influenciadores
+
+I -> C : intermediacao(g)
+' Os espaços não separáveis (U+00A0) no fim afastam o Grafo das caixas de loop
+' e deixam folga entre o rótulo e a ponta da seta.
+C -> G : nos() e vizinhos(v) de cada nó v<U+00A0><U+00A0><U+00A0><U+00A0><U+00A0><U+00A0>
+G --> C : lista de adjacência
+loop para cada origem s
+  C -> C : BFS a partir de s e\nacumula as dependências
+end
+C --> I : intermediação de cada nó
+|||
+
+I -> C : pagerank(g)
+C -> G : nos() e adj
+G --> C : lista de adjacência
+loop até convergir
+  C -> C : cada nó reparte\nseu valor entre os vizinhos
+end
+C --> I : PageRank de cada nó
+|||
+
+I -> I : ordena os nós em cada\nmétrica e pega os top-k
+I --> U : mostra um ranking\npor métrica
+@enduml
