@@ -1,4 +1,4 @@
-"""Testes de caminhos e conectividade: BFS, DFS, componentes conexas e Dijkstra.
+"""Testes de caminhos e conectividade: BFS, DFS, componentes conexas, Dijkstra, distância média e diâmetro.
 
 Casos pequenos de resposta conhecida, as bases reais (Karate Club, Twitch PT e
 Network of Thrones, lidas pelos leitores da Frente 1) e invariantes com Hypothesis.
@@ -16,7 +16,14 @@ from hypothesis import strategies as st
 from redes.leitores import RAIZ, carregar_karate, carregar_thrones, carregar_twitch_ptbr
 
 # As funções que estão sendo testadas.
-from redes.metricas.caminhos import bfs, componentes_conexas, dijkstra, ordem_dfs
+from redes.metricas.caminhos import (
+    bfs,
+    componentes_conexas,
+    diametro,
+    dijkstra,
+    distancia_media,
+    ordem_dfs,
+)
 from redes.nucleo import Grafo
 
 
@@ -578,3 +585,214 @@ def test_dijkstra_sem_pesos_coincide_com_bfs(lista):
 
     # Com todos os pesos iguais a 1.0, somar pesos é o mesmo que contar arestas.
     assert dijkstra(g, origem) == bfs(g, origem)
+
+
+# ---------------------------------------------------------------------------
+# Distância média e diâmetro: casos pequenos, de resposta conhecida
+# ---------------------------------------------------------------------------
+
+def completo(n):
+    """Grafo completo: todo nó ligado a todos os outros."""
+    return Grafo.de_arestas((i, j) for i in range(n) for j in range(i + 1, n))
+
+
+def test_distancia_media_e_diametro_grafo_vazio():
+    # Sem nós não há par nenhum: os dois valem zero, sem erro de divisão.
+    g = Grafo()
+    assert distancia_media(g) == 0.0
+    assert diametro(g) == 0
+
+
+def test_distancia_media_e_diametro_no_isolado():
+    # Um nó sozinho não alcança ninguém.
+    g = Grafo()
+    g.adicionar_no("a")
+    assert distancia_media(g) == 0.0
+    assert diametro(g) == 0
+
+
+def test_distancia_media_e_diametro_completo():
+    # No grafo completo todo par é vizinho: toda distância é 1.
+    g = completo(5)
+    assert distancia_media(g) == 1.0
+    assert diametro(g) == 1
+
+
+def test_distancia_media_e_diametro_caminho():
+    # Fila 0 - 1 - 2: as distâncias são d(0,1) = 1, d(1,2) = 1 e d(0,2) = 2.
+    g = caminho(3)
+
+    # Média: (1 + 1 + 2) / 3 = 4/3.
+    assert distancia_media(g) == pytest.approx(4 / 3)
+
+    # O par mais distante são as duas pontas, a 2 passos.
+    assert diametro(g) == 2
+
+    # Numa fila de n nós, o diâmetro é sempre n - 1 (de uma ponta à outra).
+    assert diametro(caminho(5)) == 4
+
+
+def test_distancia_media_e_diametro_estrela():
+    # Centro 0 e 4 pontas: 4 pares centro-ponta a distância 1 e 6 pares ponta-ponta a distância 2.
+    g = estrela(5)
+    assert distancia_media(g) == pytest.approx((4 * 1 + 6 * 2) / 10)
+    assert diametro(g) == 2
+
+
+def test_distancia_media_e_diametro_ciclo():
+    # Na roda de 6 nós, cada nó vê dois a distância 1, dois a distância 2 e um a distância 3.
+    g = ciclo(6)
+    assert distancia_media(g) == pytest.approx((1 + 1 + 2 + 2 + 3) / 5)
+    assert diametro(g) == 3
+
+
+def test_distancia_media_e_diametro_desconexo():
+    # Dois pedaços: 0 - 1 e 2 - 3 - 4. Pares de pedaços diferentes ficam fora da conta.
+    g = Grafo.de_arestas([(0, 1), (2, 3), (3, 4)])
+
+    # Pares alcançáveis: (0,1) = 1, (2,3) = 1, (3,4) = 1 e (2,4) = 2. Média: 5 / 4.
+    assert distancia_media(g) == pytest.approx(5 / 4)
+
+    # A maior distância que existe está no pedaço maior: 2.
+    assert diametro(g) == 2
+
+
+def test_distancia_media_e_diametro_direcionado():
+    # 1 -> 2 -> 3: só existem os pares (1,2) = 1, (2,3) = 1 e (1,3) = 2, no sentido das setas.
+    g = Grafo.de_arestas([(1, 2), (2, 3)], direcionado=True)
+    assert distancia_media(g) == pytest.approx(4 / 3)
+    assert diametro(g) == 2
+
+
+def test_distancia_media_e_diametro_nao_alteram_o_grafo():
+    g = ciclo(5)
+    distancia_media(g)
+    diametro(g)
+    assert g.numero_de_nos() == 5
+    assert g.numero_de_arestas() == 5
+
+
+# ---------------------------------------------------------------------------
+# Distância média e diâmetro por amostra de origens
+# ---------------------------------------------------------------------------
+
+def test_amostra_maior_que_o_grafo_e_exata():
+    # Pedir mais origens do que o grafo tem é o mesmo que usar todas.
+    g = caminho(6)
+    assert distancia_media(g, amostra=100) == distancia_media(g)
+    assert diametro(g, amostra=100) == diametro(g)
+
+
+def test_amostra_mesma_semente_mesmo_resultado():
+    # Com a mesma semente, as origens sorteadas são as mesmas e o resultado se repete.
+    g = caminho(50)
+    assert distancia_media(g, amostra=5, semente=7) == distancia_media(g, amostra=5, semente=7)
+    assert diametro(g, amostra=5, semente=7) == diametro(g, amostra=5, semente=7)
+
+
+def test_amostra_no_grafo_completo():
+    # No completo toda origem dá o mesmo resultado, então qualquer amostra acerta o valor exato.
+    g = completo(8)
+    assert distancia_media(g, amostra=2, semente=1) == 1.0
+    assert diametro(g, amostra=2, semente=1) == 1
+
+
+def test_amostra_invalida():
+    # Amostra com menos de 1 origem não faz sentido: a função avisa.
+    g = caminho(5)
+    with pytest.raises(ValueError):
+        distancia_media(g, amostra=0)
+    with pytest.raises(ValueError):
+        diametro(g, amostra=0)
+
+
+# ---------------------------------------------------------------------------
+# Distância média e diâmetro nas bases reais (referências do documento de tarefas e do NetworkX 3.7)
+# ---------------------------------------------------------------------------
+
+def test_karate_distancia_media_e_diametro():
+    g = carregar_karate()
+
+    # Em média, dois membros do clube estão a 2,4 passos um do outro.
+    assert distancia_media(g) == pytest.approx(2.4082, abs=1e-4)
+
+    # Os dois membros mais afastados estão a 5 passos.
+    assert diametro(g) == 5
+
+
+@precisa(THRONES)
+def test_thrones_distancia_media_e_diametro():
+    g = carregar_thrones()
+
+    # Aqui as distâncias contam arestas (BFS); os pesos da Thrones não entram.
+    assert distancia_media(g) == pytest.approx(3.3840, abs=1e-4)
+    assert diametro(g) == 8
+
+
+# Os dois testes seguintes fazem uma BFS a partir de cada um dos 1.912 nós da Twitch PT.
+# É o custo O(n(n + m)) na prática: cada um leva alguns segundos.
+
+@precisa(TWITCH)
+def test_twitch_distancia_media():
+    g, _ = carregar_twitch_ptbr()
+
+    # Referência do documento de tarefas: "mundo pequeno", 2,5 passos em média entre dois streamers.
+    assert distancia_media(g) == pytest.approx(2.5324, abs=1e-4)
+
+
+@precisa(TWITCH)
+def test_twitch_diametro():
+    g, _ = carregar_twitch_ptbr()
+
+    # Referência do documento de tarefas: os dois streamers mais afastados estão a 7 passos.
+    assert diametro(g) == 7
+
+
+@precisa(TWITCH)
+def test_twitch_amostra_de_100_origens():
+    g, _ = carregar_twitch_ptbr()
+
+    # Com 100 origens sorteadas (5% dos nós), a estimativa fica a menos de 0,05 do valor exato, 2,5324.
+    assert distancia_media(g, amostra=100, semente=1) == pytest.approx(2.5324, abs=0.05)
+
+    # O diâmetro por amostra nunca passa do verdadeiro (7): é um limite inferior.
+    assert diametro(g, amostra=100, semente=1) <= 7
+
+
+# ---------------------------------------------------------------------------
+# Invariantes da distância média e do diâmetro (Hypothesis)
+# ---------------------------------------------------------------------------
+
+@given(listas_de_arestas)
+def test_distancia_media_fica_entre_1_e_o_diametro(lista):
+    g = Grafo.de_arestas(lista)
+    media = distancia_media(g)
+    maior = diametro(g)
+
+    if maior == 0:
+        # Nenhum nó alcança outro (grafo vazio ou só com laços): a média também é 0.
+        assert media == 0.0
+    else:
+        # Toda distância entre nós diferentes vale pelo menos 1 e no máximo o diâmetro,
+        # então a média delas também fica nesse intervalo.
+        assert 1.0 <= media <= maior
+
+
+@given(listas_de_arestas)
+def test_diametro_e_a_maior_distancia_de_alguma_bfs(lista):
+    g = Grafo.de_arestas(lista)
+
+    # Calcula do jeito direto: a maior distância entre todas as BFS.
+    maior = 0
+    for v in g.nos():
+        maior = max(maior, max(bfs(g, v).values()))
+
+    assert diametro(g) == maior
+
+
+@given(listas_de_arestas, st.integers(1, 40), st.integers(0, 1000))
+def test_diametro_por_amostra_nao_passa_do_exato(lista, amostra, semente):
+    g = Grafo.de_arestas(lista)
+
+    # Olhando só algumas origens, podemos não ver o par mais distante, mas nunca inventamos um maior.
+    assert diametro(g, amostra=amostra, semente=semente) <= diametro(g)
