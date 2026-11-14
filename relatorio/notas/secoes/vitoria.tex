@@ -13,11 +13,13 @@
 \toprule
 Função & Arquivo & Complexidade & Situação \\
 \midrule
-\codigo{centralidade\_de\_grau}, \codigo{distribuicao\_de\_graus} & \codigo{metricas/grau.py} & $O(n)$ & \andamento \\
-\codigo{densidade}, \codigo{grau\_medio} & \codigo{metricas/grau.py} & $O(1)$ & \andamento \\
-\codigo{bfs}, \codigo{ordem\_dfs} & \codigo{metricas/caminhos.py} & $O(n+m)$ & \afazer \\
-\codigo{componentes\_conexas} & \codigo{metricas/caminhos.py} & $O(n+m)$ & \afazer \\
-\codigo{dijkstra} & \codigo{metricas/caminhos.py} & $O((n+m)\log n)$~\cite{dijkstra1959} & \afazer \\
+\codigo{centralidade\_de\_grau} & \codigo{metricas/grau.py} & $O(n)$ & \feito \\
+\codigo{distribuicao\_de\_graus} & \codigo{metricas/grau.py} & $O(n \log n)$ no pior caso (ordenação dos graus distintos) & \feito \\
+\codigo{densidade}, \codigo{grau\_medio} & \codigo{metricas/grau.py} & $O(1)$ & \feito \\
+\codigo{bfs} & \codigo{metricas/caminhos.py} & tempo $O(n+m)$, espaço $O(n)$~\cite{cormen2022} & \feito \\
+\codigo{ordem\_dfs} & \codigo{metricas/caminhos.py} & tempo e espaço $O(n+m)$~\cite{cormen2022} & \feito \\
+\codigo{componentes\_conexas} & \codigo{metricas/caminhos.py} & tempo $O(n+m)$, espaço $O(n)$ & \feito \\
+\codigo{dijkstra} & \codigo{metricas/caminhos.py} & tempo $O((n+m)\log n)$, espaço $O(n+m)$~\cite{dijkstra1959} & \feito \\
 \codigo{distancia\_media}, \codigo{diametro} & \codigo{metricas/caminhos.py} & $O(n(n+m))$ & \afazer \\
 \codigo{proximidade}, \codigo{harmonica} & \codigo{metricas/proximidade.py} & $O(n(n+m))$~\cite{boldi2014} & \afazer \\
 \bottomrule
@@ -25,8 +27,34 @@ Função & Arquivo & Complexidade & Situação \\
 
 \subsection{Decisões e justificativas}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: BFS com \codigo{collections.deque}, porque \codigo{list.pop(0)} custa $O(n)$}
-  \item \pendente{ex.: DFS iterativa, porque o limite de recursão do Python estoura em caminhos longos}
+  \item \textbf{Grau em $O(1)$.} A densidade e o grau médio usam o número de nós e o contador de
+        arestas que a classe \codigo{Grafo} já mantém, sem percorrer o grafo. A centralidade de grau
+        divide o grau por $n-1$, o maior grau possível, para ficar entre 0 e 1 e ser comparável entre
+        redes de tamanhos diferentes.
+  \item \textbf{BFS com \codigo{collections.deque}.} Retirar do início da fila custa $O(1)$; com
+        \codigo{list.pop(0)} custaria $O(n)$~\cite{pythoncomplexidade} e a busca deixaria de ser
+        $O(n+m)$. Cada nó entra na fila uma vez e cada aresta é examinada uma vez por ponta, o que
+        dá $O(n+m)$~\cite{cormen2022}.
+  \item \textbf{DFS iterativa, com pilha explícita.} A recursão do Python é limitada a cerca de
+        1.000 níveis e estoura em caminhos longos; um teste percorre um caminho de 5.000 nós. Os
+        vizinhos são empilhados em ordem invertida, para a ordem de visita ser a mesma da versão
+        recursiva.
+  \item \textbf{Componentes conexas por BFS.} Uma busca parte de cada nó ainda não visitado. Como
+        nenhum nó é visitado duas vezes, o custo total é o de uma única BFS, $O(n+m)$. No grafo
+        direcionado a busca percorre também os predecessores e devolve as componentes fracamente
+        conexas.
+  \item \textbf{Dijkstra com \codigo{heapq}.} A fila de prioridade guarda tuplas (distância,
+        contador, nó); o contador desempata distâncias iguais sem comparar nós, que podem ser de
+        tipos diferentes. Entradas antigas de um nó já resolvido são descartadas ao sair do heap, em
+        vez de atualizadas, o que mantém o custo em $O((n+m)\log n)$~\cite{dijkstra1959,cormen2022}.
+        Comprimento negativo lança \codigo{ValueError}, porque o algoritmo só é correto sem eles.
+  \item \textbf{Função de distância no Dijkstra.} Na Network of Thrones o peso é o número de
+        interações~\cite{beveridge2016}, então o parâmetro \codigo{distancia} recebe uma
+        função que devolve $1/\text{peso}$: quem interage mais fica mais perto.
+  \item \textbf{Mesmo código para grafo direcionado e não direcionado.} As buscas só pedem ao
+        grafo os vizinhos de cada nó; o sentido das arestas é resolvido pela classe \codigo{Grafo}.
+  \item \textbf{Nós não alcançáveis} ficam fora do resultado da BFS e do Dijkstra, em vez de
+        receberem distância infinita.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -35,11 +63,18 @@ Função & Arquivo & Complexidade & Situação \\
 \toprule
 Teste & Base & Obtido & Referência \\
 \midrule
-Densidade, grau médio e grau máximo & Karate & \falta & 0,139; 4,588; 17 \\
+Densidade, grau médio e grau máximo & Karate & 0,139; 4,588; 17 (nó 33) & 0,139; 4,588; 17 \\
+Densidade, grau médio e grau máximo & Twitch PT & 0,0171; 32,74; 767 (nó 127) & 0,0171; 32,74; 767 (nó 127) \\
+Nós a distância 0, 1, 2 e 3 do nó 0 (BFS) & Karate & 1; 16; 9; 8 & 1; 16; 9; 8 \\
+Nós a distância 0 a 4 do nó 127 (BFS) & Twitch PT & 1; 767; 1.020; 123; 1 & 1; 767; 1.020; 123; 1 \\
+Componentes conexas & Karate, Twitch PT e Thrones & 1 em cada (34, 1.912 e 303 nós) & 1 em cada \\
+Dijkstra sem pesos igual à BFS, de todas as origens & Karate & passou & distâncias iguais \\
+Dijkstra com $1/\text{peso}$, de Tyrion até Sansa, Arya e o nó mais distante & Thrones & $1/78$; 0,0563; 0,9601 (Galbart Glover) & $1/78$; 0,0563; 0,9601 \\
+Componentes repartem os nós; DFS e BFS alcançam os mesmos nós (Hypothesis) & sintético & passou & propriedade do algoritmo \\
 Distância média e diâmetro & Karate & \falta & 2,4082 e 5 \\
 Closeness dos nós 0, 2 e 33 & Karate & \falta & 0,569; 0,5593; 0,55 \\
 Harmônica dos nós 33 e 0 & Karate & \falta & 23,25 e 23,167 \\
-Componentes, distância média e diâmetro & Twitch PT & \falta & 1; 2,5324; 7 \\
+Distância média e diâmetro & Twitch PT & \falta & 2,5324 e 7 \\
 Closeness máxima & Twitch PT & \falta & nó 127 (0,6009) \\
 \bottomrule
 \end{tabularx}}
@@ -56,5 +91,8 @@ Closeness máxima & Twitch PT & \falta & nó 127 (0,6009) \\
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
-  \registro{2026-11-11}{Métricas de grau e 13 testes (PR \#6, em revisão).}
+  \registro{2026-11-11}{Métricas de grau e 13 testes (PR \#6).}
+  \registro{2026-11-14}{BFS, DFS iterativa, componentes conexas e Dijkstra, com 55 testes; os testes
+        de grau passaram a usar os leitores da Frente 1 e a cobrir a Twitch PT e a Network of
+        Thrones. As referências das bases reais foram calculadas com o NetworkX 3.7.}
 \end{description}

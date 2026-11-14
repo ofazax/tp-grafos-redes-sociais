@@ -1,6 +1,4 @@
-"""Testes das métricas de grau: casos de resposta conhecida, Karate Club e invariantes."""
-
-from pathlib import Path
+"""Testes das métricas de grau: casos de resposta conhecida, bases reais e invariantes."""
 
 import pytest
 
@@ -8,6 +6,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+#Leitores das bases (Frente 1): devolvem cada base já como Grafo
+from redes.leitores import RAIZ, carregar_karate, carregar_thrones, carregar_twitch_ptbr
 from redes.metricas.grau import (
     centralidade_de_grau,
     densidade,
@@ -16,20 +16,10 @@ from redes.metricas.grau import (
 )
 from redes.nucleo import Grafo #Montar os grafos de teste
 
-ARQUIVO_KARATE = Path(__file__).parent / "dados" / "karate_arestas.txt"
 
-
-def carregar_karate():
-    #Lê o Karate Club de tests/dados (uma aresta 'u v' por linha).
-    g = Grafo()
-    with open(ARQUIVO_KARATE, encoding="utf-8") as arquivo:
-        for linha in arquivo:
-            linha = linha.strip()
-            if not linha or linha.startswith("#"):
-                continue
-            v, w = linha.split()
-            g.adicionar_aresta(int(v), int(w))
-    return g
+def precisa(caminho):
+    #Pula o teste quando a base não foi baixada (dados/brutos/ fica fora do Git)
+    return pytest.mark.skipif(not (RAIZ / caminho).exists(), reason=f"baixe {caminho} (veja dados/README.md)")
 
 
 #Grafo completo
@@ -130,7 +120,41 @@ def test_karate_grau_maximo():
     assert max(distribuicao) == 17
     centralidade = centralidade_de_grau(g)                  #Descobre quem tem o maior grau
     assert max(centralidade, key=centralidade.get) == 33    #Nó mais central = 33
-    assert centralidade[33] == pytest.approx(17 / 33)       #n - 1 = 33 
+    assert centralidade[33] == pytest.approx(17 / 33)       #n - 1 = 33
+
+
+# Twitch PT (1.912 nós, 31.299 arestas): base principal do TP
+# Valores de referência calculados com o NetworkX 3.7; o teste pula se a base não foi baixada
+
+@precisa("dados/brutos/twitch/PTBR/musae_PTBR_edges.csv")
+def test_twitch_densidade_e_grau_medio():
+    g, _ = carregar_twitch_ptbr()                           #O leitor devolve (grafo, atributos); aqui só o grafo interessa
+    assert densidade(g) == pytest.approx(0.01713, abs=1e-5) #Rede esparsa: só 1,7% das arestas possíveis existem
+    assert grau_medio(g) == pytest.approx(32.74, abs=1e-2)  #2m / n = 62.598 / 1.912
+
+
+@precisa("dados/brutos/twitch/PTBR/musae_PTBR_edges.csv")
+def test_twitch_grau_maximo():
+    g, _ = carregar_twitch_ptbr()
+    distribuicao = distribuicao_de_graus(g)
+    assert max(distribuicao) == 767                         #Maior grau da rede
+    assert distribuicao[1] == 112                           #112 streamers têm um único vizinho
+    assert sum(distribuicao.values()) == 1912               #Todo nó entra em exatamente um grau
+    centralidade = centralidade_de_grau(g)
+    assert max(centralidade, key=centralidade.get) == 127   #Streamer mais conectado
+    assert centralidade[127] == pytest.approx(767 / 1911)   #Ligado a 40% da rede
+
+
+# Network of Thrones, livro 3 (303 personagens, 1.008 arestas com peso)
+
+@precisa("dados/brutos/asoiaf-book3-edges.csv")
+def test_thrones_grau_ignora_o_peso():
+    g = carregar_thrones()
+    assert densidade(g) == pytest.approx(0.02203, abs=1e-5)
+    centralidade = centralidade_de_grau(g)
+    mais_central = max(centralidade, key=centralidade.get)
+    assert mais_central == "Tyrion-Lannister"                       #Personagem com mais vizinhos
+    assert centralidade[mais_central] == pytest.approx(59 / 302)    #O grau conta vizinhos (59), não soma interações
 
 
 # Invariantes, em grafos aleatórios
