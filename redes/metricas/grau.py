@@ -13,6 +13,7 @@ def centralidade_de_grau(g: Grafo) -> dict[No, float]:
     o valor é 0.0.
 
     Tempo: O(n). Espaço: O(n).
+    Referência: Wasserman e Faust, Social Network Analysis (1994), cap. 5.
     """
     n = g.numero_de_nos()
 
@@ -31,6 +32,7 @@ def distribuicao_de_graus(g: Grafo) -> dict[int, int]:
     da interface.
 
     Tempo: O(n log n), pela ordenação dos graus. Espaço: O(n).
+    Referência: Barabási, Network Science (2016), cap. 2.
     """
     contagem: dict[int, int] = {}
 
@@ -50,6 +52,7 @@ def densidade(g: Grafo) -> float:
     (v, w) e (w, v) são arestas diferentes. Com menos de 2 nós, é 0.0.
 
     Tempo: O(1), porque o Grafo já guarda n e m. Espaço: O(1).
+    Referência: Wasserman e Faust, Social Network Analysis (1994), cap. 4.
     """
     n = g.numero_de_nos()
     m = g.numero_de_arestas()
@@ -75,6 +78,7 @@ def grau_medio(g: Grafo) -> float:
     vazio, é 0.0.
 
     Tempo: O(1), porque o Grafo já guarda n e m. Espaço: O(1).
+    Referência: Barabási, Network Science (2016), cap. 2.
     """
     n = g.numero_de_nos()
 

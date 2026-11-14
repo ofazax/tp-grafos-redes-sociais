@@ -22,6 +22,7 @@ def bfs(g: Grafo, origem: No) -> dict[No, int]:
     No grafo direcionado, segue o sentido das arestas. Não considera os pesos.
 
     Tempo: O(n + m). Espaço: O(n).
+    Referência: Cormen et al., Introduction to Algorithms, 4ª ed., cap. 20.
     """
     # Avisa se a origem não existe, em vez de falhar no meio da busca.
     if origem not in g:
@@ -65,6 +66,7 @@ def ordem_dfs(g: Grafo, origem: No) -> list[No]:
     em que aparecem em g.vizinhos().
 
     Tempo: O(n + m). Espaço: O(n + m), porque um nó pode entrar na pilha mais de uma vez.
+    Referência: Cormen et al., Introduction to Algorithms, 4ª ed., cap. 20; Tarjan (1972).
     """
     if origem not in g:
         raise KeyError(f"o nó {origem!r} não está no grafo")
@@ -112,6 +114,7 @@ def componentes_conexas(g: Grafo) -> list[set[No]]:
     aresta são examinados uma única vez no total, o custo é o de uma BFS só.
 
     Tempo: O(n + m). Espaço: O(n).
+    Referência: Cormen et al., Introduction to Algorithms, 4ª ed., cap. 20; Hopcroft e Tarjan (1973).
     """
     # Nós que já foram colocados em alguma componente.
     visitados: set[No] = set()
@@ -173,6 +176,7 @@ def dijkstra(
     aparecem no resultado. O dicionário sai em ordem crescente de distância.
 
     Tempo: O((n + m) log n), com heap binário (heapq). Espaço: O(n + m).
+    Referência: Dijkstra (1959), Numerische Mathematik 1:269-271; Cormen et al., 4ª ed., cap. 22.
     """
     if origem not in g:
         raise KeyError(f"o nó {origem!r} não está no grafo")
