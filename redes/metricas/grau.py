@@ -6,10 +6,14 @@ from redes.nucleo.grafo import Grafo, No
 
 
 def centralidade_de_grau(g: Grafo) -> dict[No, float]:
-    #Centralidade de grau de cada nó: grau(v) / (n - 1).
+    """Centralidade de grau de cada nó: grau(v) / (n - 1).
 
-    #É a fração dos outros nós com quem v está ligado: 1.0 significa que v é vizinho de todos. 
-    #Em grafo com menos de 2 nós não há "outros nós", então o valor é 0.0.
+    É a fração dos outros nós com quem v está ligado: 1.0 significa que v é
+    vizinho de todos. Em grafo com menos de 2 nós não há "outros nós", então
+    o valor é 0.0.
+
+    Tempo: O(n). Espaço: O(n).
+    """
     n = g.numero_de_nos()
 
     # Evita a divisão por zero (n - 1 = 0) no grafo com um único nó.
@@ -21,9 +25,13 @@ def centralidade_de_grau(g: Grafo) -> dict[No, float]:
 
 
 def distribuicao_de_graus(g: Grafo) -> dict[int, int]:
-    #Quantos nós têm cada grau: {grau: quantidade de nós}, em ordem crescente de grau.
+    """Quantos nós têm cada grau: {grau: quantidade de nós}, em ordem crescente de grau.
 
-    #Só aparecem os graus que existem no grafo. 
+    Só aparecem os graus que existem no grafo. É a base do histograma de graus
+    da interface.
+
+    Tempo: O(n log n), pela ordenação dos graus. Espaço: O(n).
+    """
     contagem: dict[int, int] = {}
 
     for v in g.nos():
@@ -36,10 +44,13 @@ def distribuicao_de_graus(g: Grafo) -> dict[int, int]:
 
 
 def densidade(g: Grafo) -> float:
-    #Fração das arestas possíveis que existem no grafo, entre 0 e 1.
+    """Fração das arestas possíveis que existem no grafo, entre 0 e 1.
 
-    #Não direcionado: 2m / (n(n - 1)). 
-    # Direcionado: m / (n(n - 1)), porque (v, w) e (w, v) são arestas diferentes. Com menos de 2 nós, é 0.0.
+    Não direcionado: 2m / (n(n - 1)). Direcionado: m / (n(n - 1)), porque
+    (v, w) e (w, v) são arestas diferentes. Com menos de 2 nós, é 0.0.
+
+    Tempo: O(1), porque o Grafo já guarda n e m. Espaço: O(1).
+    """
     n = g.numero_de_nos()
     m = g.numero_de_arestas()
 
@@ -57,10 +68,14 @@ def densidade(g: Grafo) -> float:
 
 
 def grau_medio(g: Grafo) -> float:
-    #Grau médio do grafo: soma dos graus / n = 2m / n.
+    """Grau médio do grafo: soma dos graus / n = 2m / n.
 
-    #Cada aresta soma 2 ao total dos graus (1 em cada ponta), por isso a soma dos graus é sempre 2m. 
-    #No direcionado, grau = entrada + saída. No grafo vazio, é 0.0.
+    Cada aresta soma 2 ao total dos graus (1 em cada ponta), por isso a soma
+    dos graus é sempre 2m. No direcionado, grau = entrada + saída. No grafo
+    vazio, é 0.0.
+
+    Tempo: O(1), porque o Grafo já guarda n e m. Espaço: O(1).
+    """
     n = g.numero_de_nos()
 
     if n == 0:
