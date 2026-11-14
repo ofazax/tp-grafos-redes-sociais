@@ -1,0 +1,56 @@
+@startuml atividades_louvain
+' Diagrama de atividades do algoritmo de Louvain (Blondel et al., 2008).
+' Frente 4 (Arthur), Etapa 1.
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #0284C7
+skinparam ActivityDiamondBackgroundColor #F8FAFC
+skinparam ActivityDiamondBorderColor #0284C7
+
+title Diagrama de Atividades — Detecção de Comunidades por Louvain
+
+start
+
+:Recebe o Grafo e a semente aleatória (seed);
+:Inicializa cada nó v em sua própria comunidade C_v = {v};
+:Calcula pesos dos nós, peso total m e soma incidente;
+
+repeat
+  partition "Fase 1: Otimização Local da Modularidade" {
+    :Embaralha a ordem de visitação dos nós (reprodutibilidade via seed);
+    repeat
+      :Seleciona o próximo nó v;
+      :Identifica as comunidades vizinhas a v;
+      :Calcula o ganho Delta Q para cada comunidade vizinha;
+      if (Existe vizinho com Delta Q > 0?) then (sim)
+        :Remove v da comunidade atual;
+        :Insere v na comunidade vizinha de maior ganho Delta Q;
+        :Atualiza pesos internos e incidentes da comunidade;
+      else (não)
+        :Mantém v na comunidade atual;
+      endif
+    repeat while (Existem mais nós a inspecionar na passada?) is (sim)
+  }
+
+  if (Houve ganho de modularidade significativo nesta iteração?) then (sim)
+    partition "Fase 2: Agregação da Rede (Supernós)" {
+      :Contrai cada comunidade identificada em um único supernó;
+      :Converte arestas internas em laços (self-loops) com peso somado;
+      :Soma os pesos das arestas entre comunidades distintas;
+      :Constrói novo Grafo ponderado reduzido;
+      :Armazena mapeamento hierárquico dos nós originais;
+    }
+  else (não)
+    break
+  endif
+
+repeat while (Modularidade global continua crescendo?) is (sim)
+
+:Desempacota a hierarquia de supernós para os nós originais;
+:Retorna a partição final {nó: id_comunidade} e a modularidade Q;
+
+stop
+@enduml
