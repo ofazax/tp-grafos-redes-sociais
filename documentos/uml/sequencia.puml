@@ -1,5 +1,6 @@
 @startuml sequencia
 ' Diagrama de sequência: o usuário pede o ranking de influenciadores (Frente 3, Etapa 1).
+' Três métricas: intermediação e PageRank (metricas.centralidade) e k-core (metricas.nucleo_k).
 ' Fluxo: usuário -> interface -> centralidades -> grafo.
 ' Para gerar a imagem: extensão PlantUML do VS Code (Alt+D) ou
 '   java -jar plantuml.jar -tpng documentos/uml/sequencia.puml
@@ -63,7 +64,7 @@ autonumber
 
 participant "Usuário\n<size:11><color:#5F5F5F>analista</color></size>" as U <<externo>> #FDB9B1
 participant "Interface\n<size:11><color:#5F5F5F>Streamlit</color></size>" as I #99EDC9
-participant "<b>Centralidades</b>\n<size:11><color:#5F5F5F>metricas.centralidade</color></size>" as C #AECAF9
+participant "<b>Centralidades</b>\n<size:11><color:#5F5F5F>metricas.centralidade</color></size>\n<size:11><color:#5F5F5F>metricas.nucleo_k</color></size>" as C #AECAF9
 participant "Grafo\n<size:11><color:#5F5F5F>nucleo.grafo</color></size>" as G #FBE4A8
 
 note across : Pré-condição: a base escolhida já foi carregada em um Grafo g
@@ -88,6 +89,15 @@ loop até convergir
   C -> C : cada nó reparte\nseu valor entre os vizinhos
 end
 C --> I : PageRank de cada nó
+|||
+
+I -> C : numero_de_nucleo(g)
+C -> G : vizinhos(v) de cada nó v
+G --> C : lista de vizinhos
+loop por grau crescente
+  C -> C : remove o nó e baixa\no grau dos vizinhos
+end
+C --> I : núcleo de cada nó
 |||
 
 I -> I : ordena os nós em cada\nmétrica e pega os top-k

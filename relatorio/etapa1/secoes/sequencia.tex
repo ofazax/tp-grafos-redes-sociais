@@ -27,10 +27,13 @@ no laço, em $O(km)$, e o resultado é multiplicado por $n/k$ para estimar o val
 exato~\cite{brandes2007}. A função devolve um valor por nó (mensagem 6). O
 \codigo{pagerank(g)} segue o mesmo padrão: lê a adjacência uma vez (mensagens 8 e 9) e repete
 a distribuição dos valores entre os vizinhos até convergir (mensagem 10). O k-core
-(\codigo{numero\_de\_nucleo}), a terceira centralidade da Frente 3, segue o mesmo padrão (lê o
-grafo uma vez e calcula sobre a lista indexada) e foi omitido para o diagrama não ficar longo.
+(\codigo{numero\_de\_nucleo}, no módulo \codigo{nucleo\_k}), a terceira centralidade da
+Frente 3, também lê os vizinhos de cada nó uma única vez (mensagens 13 e 14). Em seguida, o
+algoritmo de Batagelj e Zaversnik~\cite{batagelj2003} remove os nós em ordem crescente de grau,
+baixando o grau dos vizinhos, em $O(n + m)$ (mensagem 15); o grau de cada nó no momento da
+remoção é o seu número de núcleo, que volta para a interface (mensagem 16).
 Por fim, a interface ordena os nós em cada métrica, pega os $k$ primeiros e mostra um ranking por métrica
-(mensagens 12 e 13). As métricas não são somadas: comparar os rankings entre si e com o alcance
+(mensagens 17 e 18). As métricas não são somadas: comparar os rankings entre si e com o alcance
 na simulação SIR é o papel do módulo \codigo{aplicacao} (Seção~\ref{sec:problema}). As
 centralidades só chamam métodos de consulta do \codigo{Grafo} e nunca o alteram, como exigem as
 regras do grupo.
