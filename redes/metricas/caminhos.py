@@ -1,9 +1,12 @@
-"""Caminhos e conectividade: BFS, DFS, componentes conexas e Dijkstra. Frente 2."""
+"""Caminhos e conectividade: BFS, DFS, componentes conexas, Dijkstra, distância média e diâmetro. Frente 2."""
 
 from __future__ import annotations
 
 # heapq transforma uma lista comum em fila de prioridade (heap): tirar o menor custa O(log n).
 import heapq
+
+# random sorteia as origens quando a distância média e o diâmetro são calculados por amostra.
+import random
 
 # deque é uma fila de duas pontas: tirar do começo (popleft) custa O(1).
 # Numa lista comum, list.pop(0) custa O(n), porque desloca todos os outros elementos.
@@ -225,3 +228,87 @@ def dijkstra(
             heapq.heappush(fila, (d + comprimento, contador, w))
 
     return menor_distancia
+
+
+def _escolher_origens(g: Grafo, amostra: int | None, semente: int | None) -> list[No]:
+    """Nós de onde as BFS vão partir: todos, ou uma amostra sorteada sem repetição.
+
+    Tempo: O(n). Espaço: O(n).
+    """
+    nos = list(g.nos())
+
+    # Sem amostra, ou com amostra maior que o grafo, o cálculo é exato: usa todos os nós.
+    if amostra is None or amostra >= len(nos):
+        return nos
+
+    if amostra < 1:
+        raise ValueError("a amostra precisa ter pelo menos 1 origem")
+
+    # Random(semente) cria um gerador próprio: com a mesma semente, sorteia sempre os mesmos nós,
+    # e o resultado pode ser reproduzido. O sample sorteia sem repetir nó.
+    return random.Random(semente).sample(nos, amostra)
+
+
+def distancia_media(g: Grafo, amostra: int | None = None, semente: int | None = None) -> float:
+    """Distância média entre os pares de nós, em número de arestas.
+
+    Faz uma BFS a partir de cada origem e tira a média de todas as distâncias
+    encontradas. Só entram na conta os pares em que um nó alcança o outro; em
+    grafo desconexo, os pares de componentes diferentes ficam de fora. Se
+    nenhum nó alcança outro (grafo vazio ou sem arestas), devolve 0.0.
+
+    Com amostra=None o valor é exato: uma BFS por nó. Com amostra=k, só k
+    origens sorteadas com random.Random(semente) são usadas, e o resultado é
+    uma estimativa. Se k >= n, o cálculo é exato.
+
+    Tempo: O(n(n + m)) exato e O(k(n + m)) com amostra. Espaço: O(n).
+    Referência: Watts e Strogatz (1998), Nature 393:440-442; Newman, Networks, 2ª ed. (2018).
+    """
+    # Soma de todas as distâncias encontradas e quantidade de pares (origem, destino) somados.
+    soma = 0
+    pares = 0
+
+    for origem in _escolher_origens(g, amostra, semente):
+
+        # Distância da origem até cada nó que ela alcança.
+        distancia = bfs(g, origem)
+
+        # A origem aparece no dicionário com distância 0, que não muda a soma...
+        soma += sum(distancia.values())
+
+        # ...mas não conta como par: por isso o "- 1".
+        pares += len(distancia) - 1
+
+    # Sem nenhum par alcançável não existe média; evita a divisão por zero.
+    if pares == 0:
+        return 0.0
+
+    return soma / pares
+
+
+def diametro(g: Grafo, amostra: int | None = None, semente: int | None = None) -> int:
+    """Diâmetro do grafo: a maior distância, em número de arestas, entre dois nós.
+
+    Faz uma BFS a partir de cada origem e guarda a maior distância vista. Em
+    grafo desconexo, considera só os pares em que um nó alcança o outro (é o
+    maior diâmetro entre as componentes). Em grafo vazio ou sem arestas, é 0.
+
+    Com amostra=None o valor é exato. Com amostra=k, só k origens sorteadas com
+    random.Random(semente) são usadas, e o resultado é um limite inferior: o
+    diâmetro verdadeiro é maior ou igual a ele.
+
+    Tempo: O(n(n + m)) exato e O(k(n + m)) com amostra. Espaço: O(n). 
+    Referência: Newman, Networks, 2ª ed. (2018); as distâncias vêm da BFS (Cormen et al., 4ª ed., cap. 20).
+    """
+    maior = 0
+
+    for origem in _escolher_origens(g, amostra, semente):
+
+        # A maior distância a partir desta origem é a excentricidade dela.
+        excentricidade = max(bfs(g, origem).values())
+
+        # O diâmetro é a maior excentricidade entre todas as origens.
+        if excentricidade > maior:
+            maior = excentricidade
+
+    return maior

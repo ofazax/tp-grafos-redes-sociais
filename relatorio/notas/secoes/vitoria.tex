@@ -20,8 +20,8 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{ordem\_dfs} & \codigo{metricas/caminhos.py} & tempo e espaço $O(n+m)$~\cite{cormen2022} & \feito \\
 \codigo{componentes\_conexas} & \codigo{metricas/caminhos.py} & tempo $O(n+m)$, espaço $O(n)$ & \feito \\
 \codigo{dijkstra} & \codigo{metricas/caminhos.py} & tempo $O((n+m)\log n)$, espaço $O(n+m)$~\cite{dijkstra1959} & \feito \\
-\codigo{distancia\_media}, \codigo{diametro} & \codigo{metricas/caminhos.py} & $O(n(n+m))$ & \afazer \\
-\codigo{proximidade}, \codigo{harmonica} & \codigo{metricas/proximidade.py} & $O(n(n+m))$~\cite{boldi2014} & \afazer \\
+\codigo{distancia\_media}, \codigo{diametro} & \codigo{metricas/caminhos.py} & tempo $O(n(n+m))$ exato e $O(k(n+m))$ com amostra de $k$ origens, espaço $O(n)$ & \feito \\
+\codigo{proximidade}, \codigo{harmonica} & \codigo{metricas/proximidade.py} & tempo $O(n(n+m))$, espaço $O(n)$~\cite{boldi2014} & \feito \\
 \bottomrule
 \end{tabularx}}
 
@@ -55,6 +55,22 @@ Função & Arquivo & Complexidade & Situação \\
         grafo os vizinhos de cada nó; o sentido das arestas é resolvido pela classe \codigo{Grafo}.
   \item \textbf{Nós não alcançáveis} ficam fora do resultado da BFS e do Dijkstra, em vez de
         receberem distância infinita.
+  \item \textbf{Uma BFS por nó.} Distância média, diâmetro, closeness e harmônica reutilizam a
+        função \codigo{bfs}: cada uma faz $n$ buscas de custo $O(n+m)$, o que dá $O(n(n+m))$. O
+        espaço fica em $O(n)$ porque as distâncias de uma origem são descartadas antes da próxima.
+  \item \textbf{Grafo desconexo.} A distância média e o diâmetro consideram só os pares em que um
+        nó alcança o outro. A closeness usa a correção de Wasserman e Faust: com $r$ nós
+        alcançados, vale $\frac{r}{n-1}\cdot\frac{r}{\text{soma das distâncias}}$, o que evita que
+        um nó de uma componente pequena receba valor alto; em grafo conexo sobra
+        $(n-1)/\text{soma}$. A harmônica não precisa de correção, porque nó não alcançado soma
+        zero~\cite{boldi2014}.
+  \item \textbf{Amostra de origens.} \codigo{distancia\_media} e \codigo{diametro} aceitam
+        \codigo{amostra} e \codigo{semente}: as origens são sorteadas sem repetição com
+        \codigo{random.Random(semente)}, para o resultado ser reproduzível. A média amostrada é
+        uma estimativa; o diâmetro amostrado é um limite inferior do verdadeiro.
+  \item \textbf{Closeness e harmônica sem normalização extra.} A closeness já fica entre 0 e 1; a
+        harmônica vai de 0 a $n-1$, como no NetworkX, e é comparada às outras centralidades pelo
+        ranking, não pelo valor.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -71,11 +87,16 @@ Componentes conexas & Karate, Twitch PT e Thrones & 1 em cada (34, 1.912 e 303 n
 Dijkstra sem pesos igual à BFS, de todas as origens & Karate & passou & distâncias iguais \\
 Dijkstra com $1/\text{peso}$, de Tyrion até Sansa, Arya e o nó mais distante & Thrones & $1/78$; 0,0563; 0,9601 (Galbart Glover) & $1/78$; 0,0563; 0,9601 \\
 Componentes repartem os nós; DFS e BFS alcançam os mesmos nós (Hypothesis) & sintético & passou & propriedade do algoritmo \\
-Distância média e diâmetro & Karate & \falta & 2,4082 e 5 \\
-Closeness dos nós 0, 2 e 33 & Karate & \falta & 0,569; 0,5593; 0,55 \\
-Harmônica dos nós 33 e 0 & Karate & \falta & 23,25 e 23,167 \\
-Distância média e diâmetro & Twitch PT & \falta & 2,5324 e 7 \\
-Closeness máxima & Twitch PT & \falta & nó 127 (0,6009) \\
+Distância média e diâmetro & Karate & 2,4082 e 5 & 2,4082 e 5 \\
+Closeness dos nós 0, 2 e 33 & Karate & 0,5690; 0,5593; 0,5500 & 0,569; 0,5593; 0,55 \\
+Harmônica dos nós 33 e 0 & Karate & 23,25 e 23,167 & 23,25 e 23,167 \\
+Nó mais central por grau, harmônica e closeness & Karate & 33; 33; 0 & 33; 33; 0 \\
+Distância média e diâmetro & Twitch PT & 2,5324 e 7 & 2,5324 e 7 \\
+Distância média com amostra de 100 origens (semente 1) & Twitch PT & 2,5256 & 2,5324 (exato) \\
+Closeness máxima & Twitch PT & nó 127 (0,6009) & nó 127 (0,6009) \\
+Distância média e diâmetro, contando arestas & Thrones & 3,3840 e 8 & 3,3840 e 8 \\
+Closeness e harmônica máximas & Thrones & Joffrey Baratheon (0,4741 e 163,08) & Joffrey Baratheon (0,4741 e 163,08) \\
+Closeness entre 0 e 1; harmônica entre o número de vizinhos e $n-1$ (Hypothesis) & sintético & passou & propriedade da métrica \\
 \bottomrule
 \end{tabularx}}
 
@@ -86,13 +107,16 @@ Closeness máxima & Twitch PT & \falta & nó 127 (0,6009) \\
 
 \subsection{Limitações e pendências}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: distância média exata inviável no ego-Facebook; usar amostra de origens}
+  \item As quatro métricas de $O(n(n+m))$ levam alguns segundos cada na Twitch PT (1.912 BFS), e os
+        três testes exatos nessa base respondem por quase todo o tempo da suíte de testes.
 \end{itemize}
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
   \registro{2026-11-11}{Métricas de grau e 13 testes (PR \#6).}
-  \registro{2026-11-14}{BFS, DFS iterativa, componentes conexas e Dijkstra, com 55 testes; os testes
+  \registro{2026-11-14}{BFS, DFS iterativa, componentes conexas e Dijkstra, com 53 testes; os testes
         de grau passaram a usar os leitores da Frente 1 e a cobrir a Twitch PT e a Network of
         Thrones. As referências das bases reais foram calculadas com o NetworkX 3.7.}
+  \registro{2026-11-14}{Distância média, diâmetro, closeness e harmônica, com 45 testes novos
+        (Karate, Twitch PT, Network of Thrones e invariantes).}
 \end{description}
