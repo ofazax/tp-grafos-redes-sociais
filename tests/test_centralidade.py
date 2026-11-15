@@ -1,4 +1,4 @@
-"""Testes da intermediação (Brandes): casos de resposta conhecida, Karate Club, amostragem e invariantes."""
+"""Testes da intermediação (Brandes) e do PageRank: casos de resposta conhecida, Karate Club e invariantes."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from redes.metricas.centralidade import intermediacao
+from redes.metricas.centralidade import intermediacao, pagerank
 from redes.nucleo import Grafo
 
 ARQUIVO_KARATE = Path(__file__).parent / "dados" / "karate_arestas.txt"
@@ -180,3 +180,92 @@ def test_invariantes(arestas):
         total += sum(d - 1 for d in dist.values() if d > 0)
     assert sum(bruta.values()) == pytest.approx(total / 2)
     assert n == len(b)
+
+
+# PageRank
+
+
+def test_pagerank_grafo_vazio():
+    assert pagerank(Grafo()) == {}
+
+
+def test_pagerank_simetrico():
+    # Ciclo e grafo completo: todos os nós são iguais, então todos valem 1/n.
+    ciclo = Grafo.de_arestas((i, (i + 1) % 5) for i in range(5))
+    assert pagerank(ciclo) == pytest.approx({v: 1 / 5 for v in range(5)})
+    assert pagerank(completo(6)) == pytest.approx({v: 1 / 6 for v in range(6)})
+
+
+def test_pagerank_estrela():
+    # Na estrela, o centro recebe de todas as folhas e cada folha só do centro:
+    # x_c = (1 - d)/n + d(n - 1)x_f  e  x_f = (1 - d)/n + d x_c / (n - 1).
+    n, d = 6, 0.85
+    x_f = (1 - d) / n * (1 + d / (n - 1)) / (1 - d * d)
+    x_c = 1 - (n - 1) * x_f
+    # A estrela é bipartida e oscila: com mais iterações, converge na tolerância do guia.
+    pr = pagerank(estrela(n), amortecimento=d, max_iteracoes=200)
+    assert pr[0] == pytest.approx(x_c)
+    assert all(pr[i] == pytest.approx(x_f) for i in range(1, n))
+
+
+def test_pagerank_no_pendurado():
+    # 0 -> 1 e o 1 não tem saída: o valor do 1 é repartido entre todos, e a soma continua 1.
+    g = Grafo.de_arestas([(0, 1)], direcionado=True)
+    pr = pagerank(g)
+    assert sum(pr.values()) == pytest.approx(1.0)
+    assert pr[1] > pr[0]
+    # Nó isolado num grafo não direcionado também é pendurado.
+    g = Grafo.de_arestas([(0, 1)])
+    g.adicionar_no(2)
+    pr = pagerank(g)
+    assert sum(pr.values()) == pytest.approx(1.0)
+    assert pr[0] == pytest.approx(pr[1])
+    assert pr[2] < pr[0]
+
+
+def test_pagerank_sem_amortecimento_de_salto():
+    # Com amortecimento 0 só há salto aleatório: todos valem 1/n.
+    assert pagerank(carregar_karate(), amortecimento=0.0) == pytest.approx({v: 1 / 34 for v in range(34)})
+
+
+def test_pagerank_usa_o_peso():
+    # 0 -> 1 com peso 3 e 0 -> 2 com peso 1: o 1 recebe três vezes mais do 0 que o 2.
+    g = Grafo.de_arestas([(0, 1, 3.0), (0, 2, 1.0), (1, 0), (2, 0)], direcionado=True)
+    pr = pagerank(g, max_iteracoes=200)
+    assert pr[1] > pr[2]
+
+
+def test_pagerank_nao_convergiu_avisa():
+    # Com poucas iterações não dá para convergir: avisa e devolve a última iteração.
+    with pytest.warns(RuntimeWarning):
+        pr = pagerank(carregar_karate(), max_iteracoes=2)
+    assert sum(pr.values()) == pytest.approx(1.0)
+
+
+def test_pagerank_nao_altera_o_grafo():
+    g = carregar_karate()
+    antes = sorted(g.arestas())
+    pagerank(g)
+    assert sorted(g.arestas()) == antes
+
+
+def test_pagerank_karate():
+    pr = pagerank(carregar_karate())
+    assert pr[33] == pytest.approx(0.1009, abs=1e-4)
+    assert pr[0] == pytest.approx(0.0970, abs=1e-4)
+    assert pr[32] == pytest.approx(0.0717, abs=1e-4)
+    assert sum(pr.values()) == pytest.approx(1.0)
+    assert max(pr, key=pr.get) == 33
+
+
+@settings(max_examples=60)
+@given(arestas_aleatorias, st.booleans())
+def test_pagerank_invariantes(arestas, direcionado):
+    g = Grafo.de_arestas(arestas, direcionado=direcionado)
+    pr = pagerank(g, max_iteracoes=300)
+    assert set(pr) == set(g.nos())
+    if pr:
+        # Uma distribuição de probabilidade: soma 1 e todo nó recebe pelo menos o salto (1 - d)/n.
+        n = g.numero_de_nos()
+        assert sum(pr.values()) == pytest.approx(1.0)
+        assert all(valor >= 0.15 / n - 1e-9 for valor in pr.values())

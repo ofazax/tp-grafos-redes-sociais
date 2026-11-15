@@ -13,10 +13,10 @@
 \toprule
 Função & Arquivo & Complexidade & Situação \\
 \midrule
-\codigo{intermediacao} (exata) & \codigo{metricas/centralidade.py} & $O(nm)$~\cite{brandes2001} & \afazer \\
-\codigo{intermediacao} ($k$ fontes) & \codigo{metricas/centralidade.py} & $O(km)$ & \afazer \\
-\codigo{pagerank} & \codigo{metricas/centralidade.py} & $O(m)$ por iteração~\cite{brin1998} & \afazer \\
-\codigo{numero\_de\_nucleo}, \codigo{k\_nucleo} & \codigo{metricas/nucleo\_k.py} & $O(m)$~\cite{batagelj2003} & \afazer \\
+\codigo{intermediacao} (exata) & \codigo{metricas/centralidade.py} & $O(nm)$~\cite{brandes2001} & \feito \\
+\codigo{intermediacao} ($k$ fontes) & \codigo{metricas/centralidade.py} & $O(km)$~\cite{brandes2007} & \feito \\
+\codigo{pagerank} & \codigo{metricas/centralidade.py} & $O(m)$ por iteração~\cite{brin1998} & \feito \\
+\codigo{numero\_de\_nucleo}, \codigo{k\_nucleo} & \codigo{metricas/nucleo\_k.py} & $O(m)$~\cite{batagelj2003} & \feito \\
 \codigo{medir.py} (tempo, memória, TEPS) & \codigo{desempenho/} & --- & \afazer \\
 \codigo{comparar\_networkx.py} & \codigo{desempenho/} & --- & \afazer \\
 \bottomrule
@@ -24,8 +24,10 @@ Função & Arquivo & Complexidade & Situação \\
 
 \subsection{Decisões e justificativas}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: listas indexadas $0..n-1$ no Brandes e no PageRank}
-  \item \pendente{ex.: nós sem vizinhos repartem o PageRank entre todos os nós}
+  \item Listas indexadas $0..n-1$ (\codigo{IndexadorDeNos}) no Brandes, no PageRank e no k-core: mais rápidas que os dicionários do \codigo{Grafo}.
+  \item No PageRank, nós sem saída repartem o valor entre todos os nós, e a aresta é escolhida em proporção ao peso.
+  \item Se o PageRank não converge em \codigo{max\_iteracoes} (acontece em grafos bipartidos, como a estrela, com a tolerância $10^{-8}$), a função emite um aviso e devolve a última iteração, com erro da ordem de $0{,}85^{100} \approx 10^{-7}$, em vez de lançar exceção.
+  \item No k-core, laços são ignorados; no direcionado, o grau é entrada + saída, como no NetworkX.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -34,12 +36,12 @@ Função & Arquivo & Complexidade & Situação \\
 \toprule
 Teste & Base & Obtido & Referência \\
 \midrule
-Betweenness normalizada dos nós 0, 33 e 32 & Karate & \falta & 0,4376; 0,3041; 0,1452 \\
-PageRank ($d = 0{,}85$) dos nós 33, 0 e 32; soma & Karate & \falta & 0,1009; 0,097; 0,0717; 1 \\
-Núcleo máximo & Karate & \falta & 4 (nós 0, 1, 2, 3, 7, 8, 13, 30, 32, 33) \\
+Betweenness normalizada dos nós 0, 33 e 32 & Karate & 0,4376; 0,3041; 0,1452 & 0,4376; 0,3041; 0,1452 \\
+PageRank ($d = 0{,}85$) dos nós 33, 0 e 32; soma & Karate & 0,1009; 0,097; 0,0717; 1 & 0,1009; 0,097; 0,0717; 1 \\
+Núcleo máximo & Karate & 4 (os mesmos 10 nós) & 4 (nós 0, 1, 2, 3, 7, 8, 13, 30, 32, 33) \\
 Betweenness e PageRank máximos & Twitch PT & \falta & nó 127 (0,0993 e 0,0119) \\
 Núcleo máximo & Twitch PT & \falta & 37, com 154 nós \\
-Centro da estrela; grafo completo & sintético & \falta & $(n-1)(n-2)/2$; 0 \\
+Centro da estrela; grafo completo & sintético & $(n-1)(n-2)/2$; 0 & $(n-1)(n-2)/2$; 0 \\
 \bottomrule
 \end{tabularx}}
 
@@ -63,5 +65,5 @@ Centro da estrela; grafo completo & sintético & \falta & $(n-1)(n-2)/2$; 0 \\
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
-  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+  \registro{2026-11-13}{Diagrama de sequência da Etapa 1 e intermediação de Brandes (exata e por $k$ origens), PageRank e k-core, com testes.}
 \end{description}
