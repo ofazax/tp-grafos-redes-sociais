@@ -297,7 +297,7 @@ def diametro(g: Grafo, amostra: int | None = None, semente: int | None = None) -
     random.Random(semente) são usadas, e o resultado é um limite inferior: o
     diâmetro verdadeiro é maior ou igual a ele.
 
-    Tempo: O(n(n + m)) exato e O(k(n + m)) com amostra. Espaço: O(n).
+    Tempo: O(n(n + m)) exato e O(k(n + m)) com amostra. Espaço: O(n). 
     Referência: Newman, Networks, 2ª ed. (2018); as distâncias vêm da BFS (Cormen et al., 4ª ed., cap. 20).
     """
     maior = 0
