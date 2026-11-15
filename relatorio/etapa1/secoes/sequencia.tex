@@ -7,7 +7,10 @@
 
 A Figura~\ref{fig:sequencia} mostra as mensagens trocadas quando o usuário pede o ranking de
 influenciadores da Twitch PT (caso de uso UC14, que inclui o UC09, calcular centralidades). O
-fluxo passa por quatro camadas: usuário, interface, centralidades e grafo.
+ranking compara seis métricas: o grau (UC07), a closeness e a harmônica (UC09), da Frente 2, e
+a intermediação, o PageRank e o k-core (UC09), da Frente 3. Para não ficar longo, o diagrama
+detalha as três da Frente 3; as da Frente 2 seguem o mesmo padrão, descrito no fim desta seção.
+O fluxo passa por quatro camadas: usuário, interface, centralidades e grafo.
 
 \begin{figure}[htbp]
 \centering
@@ -32,6 +35,14 @@ Frente 3, também lê os vizinhos de cada nó uma única vez (mensagens 13 e 14)
 algoritmo de Batagelj e Zaversnik~\cite{batagelj2003} remove os nós em ordem crescente de grau,
 baixando o grau dos vizinhos, em $O(n + m)$ (mensagem 15); o grau de cada nó no momento da
 remoção é o seu número de núcleo, que volta para a interface (mensagem 16).
+
+As métricas da Frente 2 entram no ranking do mesmo jeito, entre as mensagens 16 e 17: a
+interface chama \codigo{centralidade\_de\_grau(g)}, \codigo{proximidade(g)} e
+\codigo{harmonica(g)}, e cada função devolve um valor por nó. O grau de cada nó, dividido por
+$n - 1$, sai direto do \codigo{Grafo}, em $O(n)$. A closeness e a harmônica fazem uma busca em
+largura a partir de cada nó, em $O(n(n + m))$: a closeness é o inverso da distância média até os
+demais nós, e a harmônica soma $1/d$ sobre as distâncias, o que funciona mesmo em grafo
+desconexo~\cite{boldi2014}.
 Por fim, a interface ordena os nós em cada métrica, pega os $k$ primeiros e mostra um ranking por métrica
 (mensagens 17 e 18). As métricas não são somadas: comparar os rankings entre si e com o alcance
 na simulação SIR é o papel do módulo \codigo{aplicacao} (Seção~\ref{sec:problema}). As
