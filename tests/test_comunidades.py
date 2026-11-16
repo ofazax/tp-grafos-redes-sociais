@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from redes.comunidades.modularidade import modularidade
+from redes.comunidades.louvain import louvain
 from redes.nucleo.grafo import Grafo
 
 ARQUIVO_ARESTAS = Path(__file__).parent / "dados" / "karate_arestas.txt"
@@ -70,3 +71,49 @@ def test_modularidade_divisao_real_karate():
 
     # A divisão histórica em duas facções tem modularidade canônica de 0.3582
     assert q == pytest.approx(0.3582, abs=1e-3)
+
+
+# -------------------------------------------------------------
+# Testes do algoritmo de Louvain
+# -------------------------------------------------------------
+
+def test_louvain_grafo_vazio():
+    g = Grafo()
+    particao, q = louvain(g)
+    assert particao == {}
+    assert q == 0.0
+
+
+def test_louvain_particao_valida():
+    # Todos os nós do grafo devem estar na partição com IDs inteiros
+    g, _ = carregar_karate_e_clubes()
+    particao, q = louvain(g)
+    assert set(particao.keys()) == set(g.nos())
+    assert all(isinstance(c, int) for c in particao.values())
+
+
+def test_louvain_determinismo():
+    # Mesma semente → mesmo resultado
+    g, _ = carregar_karate_e_clubes()
+    p1, q1 = louvain(g, seed=42)
+    p2, q2 = louvain(g, seed=42)
+    assert p1 == p2
+    assert q1 == pytest.approx(q2)
+
+
+def test_louvain_q_karate():
+    # Louvain deve encontrar partição com Q entre 0.39 e 0.42 no Karate Club
+    # (valor canônico máximo reportado: ~0.4198)
+    g, _ = carregar_karate_e_clubes()
+    _, q = louvain(g)
+    assert 0.39 <= q <= 0.42, f"Q={q:.4f} fora do intervalo esperado [0.39, 0.42]"
+
+
+def test_louvain_q_maior_que_divisao_real():
+    # Louvain otimiza Q, logo deve encontrar partição melhor que a divisão manual
+    g, particao_real = carregar_karate_e_clubes()
+    q_real = modularidade(g, particao_real)   # 0.3582
+    _, q_louvain = louvain(g)
+    assert q_louvain > q_real, (
+        f"Louvain (Q={q_louvain:.4f}) não superou a divisão real (Q={q_real:.4f})"
+    )
