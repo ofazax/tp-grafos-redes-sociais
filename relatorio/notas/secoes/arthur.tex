@@ -13,18 +13,36 @@
 \toprule
 Função & Arquivo & Complexidade & Situação \\
 \midrule
-\codigo{triangulos} & \codigo{metricas/agrupamento.py} & $O(m^{1,5})$~\cite{schank2005} & \afazer \\
-\codigo{agrupamento\_local}, \codigo{agrupamento\_medio} & \codigo{metricas/agrupamento.py} & \falta & \afazer \\
-\codigo{transitividade} & \codigo{metricas/agrupamento.py} & \falta & \afazer \\
-\codigo{modularidade} & \codigo{comunidades/} & $O(m)$~\cite{newman2004} & \afazer \\
-\codigo{louvain} & \codigo{comunidades/} & $\approx O(m)$ por passada~\cite{blondel2008} & \afazer \\
-\codigo{propagacao\_de\_rotulos} & \codigo{comunidades/} & $O(m)$ por iteração~\cite{raghavan2007} & \feito \\
-\codigo{nmi}, \codigo{ari} & \codigo{comunidades/} & \pendente{} ~\cite{danon2005,hubert1985} & \feito \\
+\codigo{triangulos} & \codigo{metricas/agrupamento.py} & $O(m^{1,5})$~\cite{schank2005} & \feito \\
+\codigo{agrupamento\_local}, \codigo{agrupamento\_medio} & \codigo{metricas/agrupamento.py} & $O(m^{1,5})$~\cite{watts1998} & \feito \\
+\codigo{transitividade} & \codigo{metricas/agrupamento.py} & $O(m^{1,5})$~\cite{newman2003} & \feito \\
+\codigo{modularidade} & \codigo{comunidades/modularidade.py} & $O(m)$~\cite{newman2004} & \feito \\
+\codigo{louvain} & \codigo{comunidades/louvain.py} & $\approx O(m)$ por passada~\cite{blondel2008} & \feito \\
+\codigo{propagacao\_de\_rotulos} & \codigo{comunidades/rotulos.py} & $O(m)$ por iteração~\cite{raghavan2007} & \feito \\
+\codigo{nmi}, \codigo{ari} & \codigo{comunidades/avaliacao.py} & $O(n)$ e $O(n + k_1 k_2)$~\cite{danon2005,hubert1985} & \feito \\
 \bottomrule
 \end{tabularx}}
 
 \subsection{Decisões e justificativas}
 \begin{itemize}[leftmargin=*]
+  \item \textbf{Contagem de triângulos em $O(m^{1,5})$ com conjuntos (\codigo{set}):} Em vez do laço 
+  ingênuo $O(n^3)$, o algoritmo itera sobre cada aresta $(u, v)$ e computa a intersecção de vizinhos 
+  em comum (\codigo{vizinhos[u] \& vizinhos[v]}), que opera em $O(\min(k_u, k_v))$. 
+  Como provado por Schank e Wagner (2005), o custo agregado é $O(m^{1,5})$.
+  \item \textbf{Eliminação do laço interno triplo:} Cada triângulo que toca o vértice $u$ 
+  incide em duas arestas de $u$. Logo, somando o tamanho da intersecção nas duas pontas de cada 
+  aresta e dividindo por 2 ao final, obtém-se o número exato de triângulos de cada nó sem precisar 
+  iterar sobre cada terceiro vértice $w$.
+  \item \textbf{Tratamento de nós de grau $< 2$ e grafos sem tríades:} Vértices com grau $0$ ou $1$ 
+  recebem agrupamento local $0{,}0$ (pois $\binom{k}{2} = 0$). 
+  Na transitividade, se o somatório global de tríades $\sum k(k-1)/2$ for zero, a função 
+  devolve $0{,}0$, evitando divisão por zero.
+  \item \textbf{Cálculo de modularidade $Q$ em tempo linear $O(m)$:} A soma dupla da definição de
+  Newman é agrupada por comunidade $\sum_c [ \Sigma_{in}(c)/(2m) - (\Sigma_{tot}(c)/(2m))^2 ]$.
+  Os acumuladores de graus incidentes $\Sigma_{tot}$ e pesos internos $\Sigma_{in}$ são computados
+  em uma única varredura pelas arestas e nós, suportando laços e grafos ponderados.
+  \item \textbf{Algoritmo de Louvain em duas fases:} Otimização local gulosa de $\Delta Q$ por nó 
+  seguida da contração do grafo em super-nós até que nenhum ganho de modularidade seja obtido.
   \item \textbf{Propagação de rótulos (LPA):} Implementação com desempate aleatório via 
   \codigo{random.Random(seed)}, garantindo reprodutibilidade nos testes e convergência assíncrona 
   com embaralhamento a cada iteração.
@@ -38,11 +56,16 @@ Função & Arquivo & Complexidade & Situação \\
 \toprule
 Teste & Base & Obtido & Referência \\
 \midrule
-Clustering médio, transitividade e triângulos & Karate & \falta & 0,5706; 0,2557; 45 \\
-Modularidade do Louvain & Karate & \falta & entre 0,39 e 0,42 (máximo 0,4198) \\
-Modularidade da divisão real (gabarito) & Karate & \falta & 0,3582 \\
-Clustering médio, transitividade e triângulos & Twitch PT & \falta & 0,3199; 0,131; 173.510 \\
-Louvain & Twitch PT & \falta & 0,286 a 0,296 ($\approx$ 7 comunidades) \\
+Clustering médio, transitividade e triângulos & Karate & 0,5706; 0,2557; 45 & 0,5706; 0,2557; 45 \\
+Grafo completo $K_5$ (clustering e transitividade) & sintético & 1,0 e 1,0 & 1,0 e 1,0 \\
+Estrela $S_5$ (sem triângulos) & sintético & 0,0 e 0,0 & 0,0 e 0,0 \\
+Invariante do intervalo $[0, 1]$ (Hypothesis) & sintético & passou & $[0, 1]$ \\
+Modularidade da divisão real (gabarito) & Karate & 0,3582 & 0,3582 \\
+Modularidade de comunidade única & sintético & 0,0 & 0,0 \\
+Modularidade de dois componentes desconexos & sintético & 0,5 & 0,5 \\
+Modularidade do Louvain & Karate & 0,4020 & entre 0,39 e 0,42 (máximo 0,4198) \\
+Clustering médio, transitividade e triângulos & Twitch PT & 0,3199; 0,1310; 173.510 & 0,3199; 0,131; 173.510 \\
+Louvain & Twitch PT & 0,2573 ($\approx$ 8 comunidades) & 0,286 a 0,296 ($\approx$ 7 comunidades) \\
 Clustering médio, transitividade e triângulos & ego-Facebook & \falta & 0,6055; 0,5192; 1.612.010 \\
 NMI e ARI de partições iguais & sintético & 1,0 e 1,0 & 1 e 1 \\
 \bottomrule
@@ -50,19 +73,35 @@ NMI e ARI de partições iguais & sintético & 1,0 e 1,0 & 1 e 1 \\
 
 \subsection{Figuras e tabelas para o relatório}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: diagrama de atividades do Louvain; Karate colorido por comunidade}
+  \item Diagrama de atividades do Louvain em \codigo{documentos/uml/} (PlantUML e PNG) e seção 
+  da Etapa 1 escrita em \codigo{relatorio/etapa1/secoes/atividades.tex}. \feito
 \end{itemize}
 
 \subsection{Limitações, ética e pendências}
 \begin{itemize}[leftmargin=*]
-  \item Limite de resolução da modularidade~\cite{fortunato2007}. \pendente{discutir}
-  \item LGPD e anonimização dos dados. \pendente{discutir}
+  \item \textbf{Limite de resolução da modularidade:} Como demonstrado por Fortunato e Barth{\'e}lemy (2007)~\cite{fortunato2007}, 
+  a maximização de modularidade possui um limite intrínseco de escala dependente do número total de arestas da rede ($\approx \sqrt{2m}$). 
+  Comunidades com menos arestas que essa escala tendem a ser fundidas arbitrariamente em comunidades maiores, mesmo que formem subgrafos densos ou cliques isoladas. 
+  Por isso, em redes extensas como a Twitch PTBR ($m = 31.299$), o Louvain agrupa subgrupos menores, justificando a análise comparativa com a Propagação de 
+  Rótulos (LPA), que opera em nível estritamente local.
+  \item \textbf{Aspectos éticos e conformidade com a LGPD:} A análise de agrupamento e comunidades em grafos de redes sociais pode inferir atributos sensíveis 
+  (preferências políticas, círculos de afinidade e hábitos) por homofilia, violando a privacidade mesmo quando o indivíduo não divulgou tais dados 
+  (Art.~5º, II da LGPD). Na base da Twitch PTBR utilizada, os usuários foram previamente anonimizados via identificadores sintéticos (\codigo{new\_id}) 
+  e variáveis agregadas, atendendo ao princípio da minimização e anonimização dos dados (Art.~6º, III da LGPD).
 \end{itemize}
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
+  \registro{2026-11-14}{Diagrama de atividades do Louvain (PlantUML e PNG) e redação da seção 
+  da Etapa 1 (branch \codigo{docs/diagrama-louvain}).}
+  \registro{2026-11-14}{Módulo \codigo{redes/metricas/agrupamento.py} com contagem de triângulos 
+  em $O(m^{1,5})$, clustering local/médio e transitividade; 6 testes unitários no pytest com gabarito
+  do Karate Club (branch \codigo{feat/triangulos-clustering}). 65 testes passando no total.}
+  \registro{2026-11-15}{Módulos \codigo{redes/comunidades/modularidade.py} e \codigo{redes/comunidades/louvain.py}
+  com cálculo linear $O(m)$ da modularidade e otimização em duas fases de Louvain ($Q \approx 0{,}4020$ no Karate Club);
+  testes unitários no pytest (branch \codigo{feat/modularidade-louvain}). 69 testes passando no total.}
   \registro{2026-11-17}{Implementação de detecção de comunidades por propagação de rótulos (LPA) 
-  e métricas de avaliação extrínseca NMI e ARI. Adicionados testes automatizados 
-  unitários e de invariantes.}
+  e métricas de avaliação extrínseca NMI e ARI. Execução dos benchmarks de validação na base real 
+  da Twitch PTBR (173.510 triângulos, clustering 0,3199, transitividade 0,1310). Redação dos aspectos éticos, 
+  LGPD e limite de resolução da modularidade (branch \codigo{feat/propagacao-nmi-ari}). 190 testes passando no total.}
 \end{description}
-
