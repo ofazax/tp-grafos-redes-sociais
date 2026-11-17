@@ -18,14 +18,18 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{transitividade} & \codigo{metricas/agrupamento.py} & \falta & \afazer \\
 \codigo{modularidade} & \codigo{comunidades/} & $O(m)$~\cite{newman2004} & \afazer \\
 \codigo{louvain} & \codigo{comunidades/} & $\approx O(m)$ por passada~\cite{blondel2008} & \afazer \\
-\codigo{propagacao\_de\_rotulos} & \codigo{comunidades/} & $O(m)$ por iteração~\cite{raghavan2007} & \afazer \\
-\codigo{nmi}, \codigo{ari} & \codigo{comunidades/} & \pendente{} ~\cite{danon2005,hubert1985} & \afazer \\
+\codigo{propagacao\_de\_rotulos} & \codigo{comunidades/} & $O(m)$ por iteração~\cite{raghavan2007} & \feito \\
+\codigo{nmi}, \codigo{ari} & \codigo{comunidades/} & \pendente{} ~\cite{danon2005,hubert1985} & \feito \\
 \bottomrule
 \end{tabularx}}
 
 \subsection{Decisões e justificativas}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: fórmula do ganho de modularidade usada no Louvain}
+  \item \textbf{Propagação de rótulos (LPA):} Implementação com desempate aleatório via 
+  \codigo{random.Random(seed)}, garantindo reprodutibilidade nos testes e convergência assíncrona 
+  com embaralhamento a cada iteração.
+  \item \textbf{Métricas NMI e ARI:} Computadas em $O(n)$ com tabelas de contingência esparsas 
+  via \codigo{Counter}, sem dependência de bibliotecas externas (puro Python).
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -40,7 +44,7 @@ Modularidade da divisão real (gabarito) & Karate & \falta & 0,3582 \\
 Clustering médio, transitividade e triângulos & Twitch PT & \falta & 0,3199; 0,131; 173.510 \\
 Louvain & Twitch PT & \falta & 0,286 a 0,296 ($\approx$ 7 comunidades) \\
 Clustering médio, transitividade e triângulos & ego-Facebook & \falta & 0,6055; 0,5192; 1.612.010 \\
-NMI e ARI de partições iguais & sintético & \falta & 1 e 1 \\
+NMI e ARI de partições iguais & sintético & 1,0 e 1,0 & 1 e 1 \\
 \bottomrule
 \end{tabularx}}
 
@@ -57,5 +61,8 @@ NMI e ARI de partições iguais & sintético & \falta & 1 e 1 \\
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
-  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+  \registro{2026-11-17}{Implementação de detecção de comunidades por propagação de rótulos (LPA) 
+  e métricas de avaliação extrínseca NMI e ARI. Adicionados testes automatizados 
+  unitários e de invariantes.}
 \end{description}
+
