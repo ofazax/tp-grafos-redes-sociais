@@ -1,0 +1,11 @@
+algoritmo,implementacao,inclinacao_tempo,inclinacao_memoria
+bfs,redes,1.257,1.075
+bfs,networkx,1.260,1.040
+intermediacao_exata,redes,2.038,0.985
+intermediacao_exata,networkx,2.113,0.922
+intermediacao_k100,redes,1.195,1.006
+intermediacao_k100,networkx,1.238,1.040
+pagerank,redes,1.028,1.009
+pagerank,networkx,0.991,1.005
+numero_de_nucleo,redes,1.162,1.029
+numero_de_nucleo,networkx,1.194,1.042
