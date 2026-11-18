@@ -55,20 +55,22 @@ $\sigma_{st}(v)$ quantos passam por $v$, $V_k$ os nós do $k$-núcleo, o maior s
 com grau mínimo $k$, e $\alpha = 0{,}85$. O custo do PageRank é por iteração.}
 \label{tab:centralidades}
 \small
-\begin{tabular}{@{}l >{$\displaystyle}l<{$} l@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}l >{$\displaystyle}l<{$} l Y@{}}
 \toprule
-Medida & \text{Definição de } c(v) & Custo \\
+Medida & \text{Definição de } c(v) & Custo & Referência \\
 \midrule
-Grau $C_D$ & \frac{k_v}{n-1} & $O(n)$ \\[8pt]
-Proximidade $C_C$ & \frac{n-1}{\sum_{u \neq v} d(v, u)} & $O(n(n+m))$ \\[8pt]
-Harmônica $C_H$~\cite{boldi2014} & \sum_{u \neq v} \frac{1}{d(v, u)} & $O(n(n+m))$ \\[8pt]
-Intermediação $C_B$~\cite{brandes2001} & \frac{2}{(n-1)(n-2)} \sum_{\{s,t\} \subseteq V \setminus \{v\}} \frac{\sigma_{st}(v)}{\sigma_{st}}
-  & $O(nm)$ \\[8pt]
-PageRank $\mathit{PR}$~\cite{brin1998} & \frac{1-\alpha}{n} + \alpha \sum_{u \in N(v)} \frac{\mathit{PR}(u)}{k_u}
-  & $O(n+m)$ \\[8pt]
-Núcleo $k_s$~\cite{batagelj2003} & \max\{k : v \in V_k\} & $O(n+m)$ \\
+Grau $C_D$ & \frac{k_v}{n-1} & $O(n)$ & --- \\[8pt]
+Proximidade $C_C$ & \frac{n-1}{\sum_{u \neq v} d(v, u)} & $O(n(n+m))$
+  & \cite{bavelas1950}\newline\cite{sabidussi1966} \\[8pt]
+Harmônica $C_H$ & \sum_{u \neq v} \frac{1}{d(v, u)} & $O(n(n+m))$ & \cite{boldi2014} \\[8pt]
+Intermediação $C_B$ & \tfrac{2}{(n-1)(n-2)} \sum_{s < t;\, s, t \neq v} \frac{\sigma_{st}(v)}{\sigma_{st}}
+  & $O(nm)$ & \cite{brandes2001} \\[8pt]
+PageRank $\mathit{PR}$ & \tfrac{1-\alpha}{n} + \alpha \sum_{u \in N(v)} \tfrac{\mathit{PR}(u)}{k_u}
+  & $O(n+m)$ & \cite{brin1998} \\[8pt]
+Núcleo $k_s$ & \max\{k : v \in V_k\} & $O(n+m)$ & \cite{batagelj2003} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \paragraph{Referências de validação.} Os rankings são comparados com as visualizações $w$ e com o
