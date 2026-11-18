@@ -2,13 +2,19 @@
 
 from pathlib import Path
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from redes.leitores import RAIZ, carregar_twitch_ptbr
 from redes.metricas.nucleo_k import k_nucleo, numero_de_nucleo
 from redes.nucleo import Grafo
 
 ARQUIVO_KARATE = Path(__file__).parent / "dados" / "karate_arestas.txt"
+TWITCH = "dados/brutos/twitch/PTBR/musae_PTBR_edges.csv"
+
+# A Twitch PT não vai para o Git (dados/brutos/): o teste dela pula se a base não foi baixada.
+precisa_twitch = pytest.mark.skipif(not (RAIZ / TWITCH).exists(), reason=f"baixe {TWITCH} (veja dados/README.md)")
 
 
 def carregar_karate():
@@ -106,6 +112,20 @@ def test_karate():
     assert max(nucleo.values()) == 4
     assert {v for v, c in nucleo.items() if c == 4} == {0, 1, 2, 3, 7, 8, 13, 30, 32, 33}
     assert set(k_nucleo(g, 4).nos()) == {0, 1, 2, 3, 7, 8, 13, 30, 32, 33}
+
+
+# Twitch PT: valor de referência do guia (NetworkX 3.7)
+
+
+@precisa_twitch
+def test_twitch():
+    g, _ = carregar_twitch_ptbr()
+    nucleo = numero_de_nucleo(g)
+    assert max(nucleo.values()) == 37
+    assert sum(1 for c in nucleo.values() if c == 37) == 154
+    miolo = k_nucleo(g, 37)
+    assert miolo.numero_de_nos() == 154
+    assert all(miolo.grau(v) >= 37 for v in miolo.nos())
 
 
 # Invariantes em grafos aleatórios
