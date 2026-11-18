@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrafoSocial | Análise de Grafos e Redes Sociais</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            offwhite: '#FCFFF5',
+            sage: '#D1DBBD',
+            sagelight: '#EEF3E2',
+            sagesoft: '#E4ECD0',
+            mutedgreen: '#91AA9D',
+            petrol: '#3E606F',
+            deepnavy: '#193441',
+            codebg: '#0F222B',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+/*__ESTILOS_CSS__*/
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none sm:select-auto">
+
+  <!-- ================= HEADER SUPERIOR FIXO (h=64px) ================= -->
+  <header class="h-16 bg-deepnavy text-offwhite border-b border-petrol px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-30 shadow-md">
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-10 h-10 rounded-xl bg-petrol border border-mutedgreen flex items-center justify-center shadow-inner">
+        <svg class="w-6 h-6 text-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="6" cy="6" r="3" />
+          <circle cx="18" cy="6" r="3" />
+          <circle cx="12" cy="18" r="3" />
+          <line x1="8.5" y1="7.5" x2="15.5" y2="7.5" />
+          <line x1="7.5" y1="8.5" x2="10.8" y2="15.5" />
+          <line x1="16.5" y1="8.5" x2="13.2" y2="15.5" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-bold text-base sm:text-[17px] tracking-tight text-offwhite leading-tight">GrafoSocial</h1>
+        <p class="text-[11px] text-mutedgreen hidden sm:block leading-tight mt-0.5">Análise de Grafos e Redes Sociais</p>
+      </div>
+    </div>
+
+    <!-- Centro: Seletor Rápido para Carregar Base Real Direto no Header -->
+    <div class="flex items-center gap-2.5 bg-petrol border border-mutedgreen px-3 py-1.5 rounded-xl shadow-sm max-w-full overflow-x-auto">
+      <div class="flex items-center gap-2 pl-0.5 shrink-0">
+        <span id="backendStatusDot" class="w-2.5 h-2.5 rounded-full bg-sage animate-pulse"></span>
+        <label for="headerDatasetSelect" class="text-[11px] font-semibold text-sage hidden md:inline">Base Ativa:</label>
+      </div>
+
+      <select id="headerDatasetSelect" onchange="switchDatasetFromHeader(this.value)" class="bg-deepnavy text-offwhite text-xs font-medium px-3 py-1.5 rounded-lg border border-mutedgreen focus:outline-none focus:border-sage cursor-pointer transition-colors">
+      </select>
+
+      <span id="headerGraphBadge" class="hidden xl:inline-block text-[10.5px] font-mono font-medium text-sage px-2.5 py-1 rounded-md bg-deepnavy border border-mutedgreen/40 whitespace-nowrap">
+        Não-Direcionado • Sem Peso
+      </span>
+    </div>
+
+    <!-- Direita: Ações Rápidas -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <button onclick="navigateTo('page-uc16')" class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-deepnavy border border-mutedgreen hover:bg-petrol text-xs font-semibold text-offwhite cursor-pointer transition-all">
+        <span class="w-2 h-2 rounded-full bg-sage"></span>
+        <span>Resultados</span>
+      </button>
+      <button id="btnHeaderExportJson" onclick="quickExportJSON(this)" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-sage hover:bg-offwhite text-deepnavy text-xs font-bold cursor-pointer transition-all shadow-sm">
+        <i class="ph ph-download-simple text-sm font-bold"></i>
+        <span>Exportar Resultados</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= CORPO PRINCIPAL (SIDEBAR + CONTEÚDO) ================= -->
+  <div class="flex flex-1 overflow-hidden relative">
+
+    <!-- SIDEBAR LATERAL ESQUERDA -->
+    <aside id="sidebar" class="w-[236px] bg-deepnavy text-offwhite border-r border-petrol flex flex-col shrink-0 z-20">
+      <nav class="p-3 space-y-1.5 overflow-y-auto flex-1">
+        <div class="px-2.5 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-mutedgreen">
+          NAVEGAÇÃO
+        </div>
+
+        <button onclick="navigateTo('page-uc01')" id="nav-page-uc01" class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          </svg>
+          <span>Obter Grafo</span>
+        </button>
+
+        <button onclick="navigateTo('page-uc04')" id="nav-page-uc04" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          <span>Visualizar Rede</span>
+        </button>
+
+        <button onclick="navigateTo('page-uc06')" id="nav-page-uc06" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Métricas da Rede</span>
+        </button>
+
+        <button onclick="navigateTo('page-uc11')" id="nav-page-uc11" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"></circle>
+            <circle cx="6" cy="17" r="4"></circle>
+            <circle cx="18" cy="17" r="4"></circle>
+          </svg>
+          <span>Comunidades</span>
+        </button>
+
+        <button onclick="navigateTo('page-uc14')" id="nav-page-uc14" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+            <circle cx="12" cy="12" r="2"></circle>
+            <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+            <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path>
+          </svg>
+          <span>Influenciadores & SIR</span>
+        </button>
+
+        <button onclick="navigateTo('page-uc16')" id="nav-page-uc16" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-offwhite/90 hover:bg-petrol/60 cursor-pointer transition-all text-left">
+          <svg class="w-4 h-4 text-sage shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>Resultados & Exportação</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 overflow-y-auto bg-offwhite px-5 py-5 lg:px-8 lg:py-6 relative">
+
+      <!-- Tooltip Flutuante Estilo Google Maps para Inspeção ao Passar o Mouse -->
+      <div id="mapHoverTooltip" class="fixed z-50 hidden pointer-events-none bg-deepnavy/95 text-offwhite border border-sage/70 px-3 py-2 rounded-xl shadow-xl text-[11px] font-mono space-y-0.5 backdrop-blur-xs">
+        <div id="ttTitle" class="font-bold text-sage text-xs"></div>
+        <div id="ttLine1" class="text-offwhite/90"></div>
+        <div id="ttLine2" class="text-mutedgreen text-[10px]"></div>
+      </div>
+
+      <!-- =========================================================================
+           PÁGINA 1: OBTER GRAFO
+           ========================================================================= -->
+      <section id="page-uc01" class="page-section space-y-5 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3.5">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Configuração da Rede</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Obter Grafo para a Sessão</h2>
+            <p class="text-[12.5px] text-petrol mt-0.5">Selecione uma base pública homologada, importe um arquivo local ou gere um grafo sintético.</p>
+          </div>
+          <button onclick="navigateTo('page-uc04')" class="btn-primary px-4 py-2.5 rounded-[10px] text-xs font-semibold flex items-center gap-2 cursor-pointer self-start sm:self-auto shrink-0">
+            <span>Ir para Visualizar Rede →</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- CARD 1: CARREGAR BASE DE DADOS REAL -->
+          <div class="bg-offwhite rounded-2xl border-2 border-sage shadow-sm overflow-hidden flex flex-col justify-between">
+            <div>
+              <div class="bg-deepnavy text-offwhite px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="ph ph-folder-open text-lg text-sage"></i>
+                  <h3 class="font-semibold text-[14px]">Carregar Base de Dados Real</h3>
+                </div>
+                <span class="text-[10px] font-mono font-semibold bg-petrol px-2.5 py-0.5 rounded text-sage">SNAP / CSV</span>
+              </div>
+
+              <div class="p-5 space-y-4">
+                <div>
+                  <label class="block text-[10.5px] font-bold uppercase tracking-wider text-petrol mb-2">Selecionar Base de Dados Homologada</label>
+                  <div class="grid grid-cols-2 gap-2.5" id="realDatasetCardsGrid"></div>
+                  <select id="selectRealDataset" onchange="previewRealDataset()" class="hidden">
+                    <option value="facebook" selected>ego-Facebook</option>
+                    <option value="twitch">Twitch PT</option>
+                    <option value="thrones">Network of Thrones</option>
+                    <option value="karate">Karate Club</option>
+                  </select>
+                </div>
+
+                <!-- Componente de Importação de Arquivo -->
+                <div>
+                  <label class="block text-[10.5px] font-bold uppercase tracking-wider text-petrol mb-1.5">Ou Importar Arquivo de Base Real (.txt, .csv)</label>
+                  <input type="file" id="realFileInput" accept=".txt,.csv" class="hidden" onchange="handleRealFileUpload(event)">
+
+                  <!-- ESTADO VAZIO -->
+                  <div id="fileUploadEmptyState" class="border-2 border-dashed border-mutedgreen rounded-[14px] p-4 bg-sagelight text-center flex flex-col items-center justify-center gap-1.5 transition-all">
+                    <div class="w-9 h-8 rounded-[9px] bg-sage text-deepnavy flex items-center justify-center font-bold text-base">
+                      ↑
+                    </div>
+                    <div>
+                      <p class="text-[11.5px] font-semibold text-deepnavy">Nenhum arquivo externo selecionado</p>
+                      <p class="text-[10px] text-petrol mt-0.5">Formatos suportados: lista de arestas (.txt) ou tabela (.csv)</p>
+                    </div>
+                    <button id="btnImportFile" type="button" onclick="document.getElementById('realFileInput').click()" class="mt-1 btn-primary px-4 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer">
+                      <span>Importar Arquivo</span>
+                    </button>
+                  </div>
+
+                  <!-- ESTADO CARREGADO -->
+                  <div id="fileUploadLoadedState" class="hidden border-2 border-[#22C55E] rounded-[14px] p-4 bg-[#DCFCE7] text-center flex flex-col items-center justify-center gap-1 transition-all">
+                    <div class="w-8 h-8 rounded-full bg-[#22C55E] text-white flex items-center justify-center font-bold text-base shadow-xs">
+                      ✓
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-bold uppercase tracking-wider text-[#15803D] block">Arquivo Carregado e Validado</span>
+                      <p id="uploadedFileNameDisplay" class="text-[13px] font-mono font-bold text-deepnavy"></p>
+                      <p id="uploadedFileMetaDisplay" class="text-[10.5px] text-petrol"></p>
+                    </div>
+                    <button id="btnRemoveFile" type="button" onclick="removeImportedFile(this)" class="mt-1 px-3.5 py-1 rounded-lg bg-[#FEE2E2] hover:bg-[#FECACA] text-[#B91C1C] border border-[#EF4444] text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer transition-colors">
+                      <span>🗑 Remover arquivo</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Opções de Leitura -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+                    <span class="block text-[11px] font-semibold text-deepnavy mb-1.5">Direcionamento</span>
+                    <div class="flex items-center gap-3 text-[10.5px]">
+                      <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                        <input type="radio" name="dirReal" id="dirUndirected" value="Não-Direcionado" checked class="accent-petrol"> Não-Direcionado
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                        <input type="radio" name="dirReal" id="dirDirected" value="Direcionado" class="accent-petrol"> Direcionado
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+                    <span class="block text-[11px] font-semibold text-deepnavy mb-1.5">Ponderação de Arestas</span>
+                    <div class="flex items-center gap-3 text-[10.5px]">
+                      <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                        <input type="radio" name="weightReal" id="weightNone" value="Sem Peso" checked class="accent-petrol"> Sem Peso
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                        <input type="radio" name="weightReal" id="weightYes" value="Com Peso" class="accent-petrol"> Com Peso
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-5 py-3.5 bg-sagelight border-t border-sage flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono text-petrol truncate" id="realPathHint"></span>
+              <button id="btnLoadReal" onclick="loadRealGraph(this)" class="btn-primary px-4 py-2 rounded-[9px] text-[11.5px] font-semibold flex items-center gap-1.5 cursor-pointer shrink-0">
+                <span>✓ Carregar Base Real</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 2: GERAR GRAFO SINTÉTICO -->
+          <div class="bg-offwhite rounded-2xl border-2 border-sage shadow-sm overflow-hidden flex flex-col justify-between">
+            <div>
+              <div class="bg-deepnavy text-offwhite px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="ph ph-cpu text-lg text-sage"></i>
+                  <h3 class="font-semibold text-[14px]">Gerar Grafo Sintético</h3>
+                </div>
+                <span class="text-[10px] font-mono font-semibold bg-petrol px-2.5 py-0.5 rounded text-sage">Modelos Clássicos</span>
+              </div>
+
+              <div class="p-5 space-y-4">
+                <div>
+                  <label class="block text-[10.5px] font-bold uppercase tracking-wider text-petrol mb-1.5">Modelo Matemático</label>
+                  <select id="selectSynthModel" onchange="updateSynthParamsUI()" class="w-full rounded-[10px] border border-mutedgreen bg-offwhite px-3.5 py-2.5 text-xs font-semibold text-deepnavy focus:outline-none focus:ring-2 focus:ring-petrol cursor-pointer">
+                    <option value="ba">Barabási–Albert (Anexação Preferencial / Livre de Escala)</option>
+                    <option value="er">Erdős–Rényi G(n, p) (Grafo Aleatório Uniforme)</option>
+                    <option value="ws">Watts–Strogatz (Mundo Pequeno / Reconexão β)</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-medium text-petrol mb-1">Número de Nós (n)</label>
+                    <input type="number" id="synthN" value="150" min="10" max="5000" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-2 text-[13px] font-mono font-semibold text-deepnavy">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-petrol mb-1" id="paramLabel1">Arestas por nó (m)</label>
+                    <input type="number" id="synthParam1" value="3" step="1" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-2 text-[13px] font-mono font-semibold text-deepnavy">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-petrol mb-1">Semente (seed)</label>
+                    <input type="number" id="synthSeed" value="42" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-2 text-[13px] font-mono font-semibold text-deepnavy">
+                  </div>
+                </div>
+
+                <div id="synthModelDesc" class="p-3.5 rounded-xl bg-sagelight border border-sage text-[11.5px] text-deepnavy space-y-1">
+                  <div class="font-bold text-petrol">Propriedade Esperada (Barabási–Albert):</div>
+                  <p>Distribuição de grau em lei de potência (Power-law), formação natural de hubs e baixo diâmetro.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-5 py-3.5 bg-sagelight border-t border-sage flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono text-petrol">Reprodutibilidade via semente</span>
+              <button id="btnGenerateSynth" onclick="generateSyntheticGraph(this)" class="btn-primary px-4 py-2 rounded-[9px] text-[11.5px] font-semibold flex items-center gap-1.5 cursor-pointer shrink-0">
+                <span>✦ Gerar Rede Sintética</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CARD 3: RESUMO DO GRAFO ATIVO NA SESSÃO -->
+        <div class="bg-offwhite rounded-2xl border-2 border-sage p-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-sage">
+            <h3 class="font-bold text-[14px] text-deepnavy">Resumo do Grafo Ativo na Sessão</h3>
+            <span class="text-[10px] font-mono font-semibold px-3 py-1 rounded bg-sage text-deepnavy">Pronto para Análise</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Base Ativa</span>
+              <strong id="statName" class="text-[13.5px] font-bold text-deepnavy font-mono mt-1 block truncate"></strong>
+            </div>
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Vértices |V|</span>
+              <strong id="statV" class="text-[13.5px] font-bold text-deepnavy font-mono mt-1 block"></strong>
+            </div>
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Arestas |E|</span>
+              <strong id="statE" class="text-[13.5px] font-bold text-deepnavy font-mono mt-1 block"></strong>
+            </div>
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Laços Ignorados</span>
+              <strong id="statLoops" class="text-[13.5px] font-bold text-deepnavy font-mono mt-1 block"></strong>
+            </div>
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Configuração</span>
+              <strong id="statType" class="text-[13px] font-bold text-deepnavy font-mono mt-1 block"></strong>
+            </div>
+            <div class="p-3 rounded-[10px] bg-sagelight border border-sage">
+              <span class="text-[10.5px] text-petrol block">Comunidades Reais</span>
+              <strong id="statGT" class="text-[13px] font-bold text-deepnavy font-mono mt-1 block"></strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           PÁGINA 2: VISUALIZAR REDE + CAMINHOS (MAPA INTERATIVO COMPLETO)
+           ========================================================================= -->
+      <section id="page-uc04" class="page-section hidden space-y-4 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Exploração Visual e Rotas</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Visualizar Rede e Caminho Calculado</h2>
+            <p class="text-[12px] text-petrol mt-0.5">Arraste para navegar, use o scroll para dar zoom em qualquer região e clique nos vértices do grafo completo.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <select id="visSizeBy" onchange="drawMap('network')" class="rounded-[10px] border border-mutedgreen bg-offwhite px-3 py-2 text-[11.5px] font-semibold text-deepnavy cursor-pointer">
+              <option value="degree">Dimensionar por: Grau ▾</option>
+              <option value="pagerank">Dimensionar por: PageRank ▾</option>
+              <option value="uniform">Tamanho Uniforme ▾</option>
+            </select>
+            <button id="btnRecalcLayout" onclick="recalculateFRLayout(this)" class="btn-secondary px-3.5 py-2 rounded-[10px] text-[11.5px] font-semibold flex items-center gap-1.5 cursor-pointer">
+              <span>↻ Recalcular Layout</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+          <div class="lg:col-span-4 space-y-3.5">
+            <!-- Card 1: Caminho e Conectividade no Grafo -->
+            <div class="bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-3 shadow-sm">
+              <div class="flex items-center justify-between border-b border-sage pb-2">
+                <h3 class="font-bold text-[13.5px] text-deepnavy">Caminho e Conectividade no Grafo</h3>
+                <span id="pathStatusPill" class="px-2.5 py-0.5 rounded bg-[#22C55E] text-deepnavy text-[10px] font-bold">Visível no Grafo</span>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-petrol mb-1">Algoritmo de Busca / Rota</label>
+                <select id="pathAlgo" onchange="computeAndHighlightPathOnGraph()" class="w-full rounded-[9px] border border-mutedgreen bg-offwhite px-3 py-1.5 text-[11.5px] font-semibold text-deepnavy cursor-pointer">
+                  <option value="Dijkstra">Caminho Mínimo (Dijkstra)</option>
+                  <option value="BFS">Busca em Largura (BFS)</option>
+                  <option value="DFS">Busca em Profundidade (DFS)</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10.5px] font-semibold text-petrol mb-1">Nó de Origem</label>
+                  <input type="text" id="pathSource" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-1.5 text-xs font-mono font-bold text-deepnavy">
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-semibold text-petrol mb-1">Nó de Destino</label>
+                  <input type="text" id="pathTarget" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-1.5 text-xs font-mono font-bold text-deepnavy">
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button id="btnCalcPath" onclick="computeAndHighlightPathOnGraph(this)" class="btn-primary flex-1 py-2 px-3 rounded-[10px] text-[11.5px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>➤ Calcular e Destacar no Grafo</span>
+                </button>
+                <button onclick="clearGraphPath()" class="btn-secondary py-2 px-3 rounded-[10px] text-[11.5px] font-semibold cursor-pointer">
+                  Limpar
+                </button>
+              </div>
+
+              <div class="p-3 rounded-xl bg-deepnavy text-offwhite space-y-2">
+                <div class="text-[11px] font-mono text-sage">
+                  <span id="pathResultHeader"></span>
+                </div>
+                <div id="pathStepsVisual" class="flex flex-wrap items-center gap-1.5 max-h-24 overflow-y-auto"></div>
+              </div>
+            </div>
+
+            <!-- Card 2: Inspetor de Vértice Selecionado -->
+            <div class="bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-2.5 shadow-sm">
+              <div class="flex items-center justify-between border-b border-sage pb-2">
+                <div>
+                  <span class="text-[9.5px] font-mono uppercase text-petrol block">Vértice Selecionado no Grafo</span>
+                  <h4 id="inspNodeId" class="font-bold text-base text-deepnavy font-mono"></h4>
+                </div>
+                <span id="inspLabel" class="px-2.5 py-1 rounded-[7px] bg-sage text-deepnavy font-mono text-[10.5px] font-semibold"></span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div class="p-2.5 rounded-lg bg-sagelight border border-sage">
+                  <span class="text-[10px] text-petrol block">Grau</span>
+                  <strong id="inspDegree" class="text-[12.5px] text-deepnavy"></strong>
+                </div>
+                <div class="p-2.5 rounded-lg bg-sagelight border border-sage">
+                  <span class="text-[10px] text-petrol block">PageRank</span>
+                  <strong id="inspPR" class="text-[12.5px] text-deepnavy"></strong>
+                </div>
+                <div class="p-2.5 rounded-lg bg-sagelight border border-sage">
+                  <span class="text-[10px] text-petrol block">Betweenness</span>
+                  <strong id="inspBet" class="text-[12.5px] text-deepnavy"></strong>
+                </div>
+                <div class="p-2.5 rounded-lg bg-sagelight border border-sage">
+                  <span class="text-[10px] text-petrol block">Camada k-Core</span>
+                  <strong id="inspKcore" class="text-[12.5px] text-deepnavy"></strong>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="btnSetOrigin" onclick="setClickedAsOrigin(this)" class="btn-secondary py-2 px-2.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>Usar como Origem</span>
+                </button>
+                <button id="btnSetTarget" onclick="setClickedAsTarget(this)" class="btn-secondary py-2 px-2.5 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>Usar como Destino</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Mapa Interativo Completo da Rede -->
+          <div class="lg:col-span-8 canvas-bg rounded-2xl border-2 border-petrol shadow-sm relative overflow-hidden h-[580px]">
+            <canvas id="networkCanvas" class="w-full h-full map-canvas block"></canvas>
+
+            <!-- Barra de Busca de Nó no Mapa (Canto Superior Direito) -->
+            <div class="absolute top-3.5 right-3.5 flex items-center gap-1 bg-offwhite/95 border border-petrol rounded-xl px-2.5 py-1 shadow-md">
+              <i class="ph ph-magnifying-glass text-petrol text-xs"></i>
+              <input type="text" id="searchNodeNetwork" placeholder="Localizar nó..." onkeydown="if(event.key==='Enter')searchAndFlyToNode('network', this.value)" class="bg-transparent text-xs font-mono text-deepnavy focus:outline-none w-28">
+              <button onclick="searchAndFlyToNode('network', document.getElementById('searchNodeNetwork').value)" class="px-2 py-0.5 rounded bg-petrol text-offwhite text-[10px] font-semibold cursor-pointer hover:bg-deepnavy">Ir</button>
+            </div>
+
+            <!-- Badge Superior Esquerdo de Rota Ativa -->
+            <div id="canvasPathOverlayBadge" class="absolute top-3.5 left-3.5 bg-[#DCFCE7]/95 border-2 border-[#22C55E] text-[#15803D] px-3 py-1.5 rounded-[10px] text-[11px] font-bold font-mono flex items-center gap-2 shadow-sm max-w-[60%] truncate">
+              <span id="canvasPathOverlayText" class="truncate"></span>
+            </div>
+
+            <!-- Mini-mapa (Radar de Navegação no Canto Inferior Esquerdo) -->
+            <div class="absolute bottom-3.5 left-3.5 bg-deepnavy/90 border border-petrol rounded-xl p-1 shadow-md">
+              <canvas id="networkMinimap" width="116" height="86" class="rounded-lg cursor-pointer block"></canvas>
+            </div>
+
+            <!-- Controles de Mapa Estilo Google Maps (Canto Inferior Direito) -->
+            <div class="absolute bottom-3.5 right-3.5 flex items-center gap-1 bg-deepnavy/95 px-2.5 py-1.5 rounded-xl border border-petrol shadow-md">
+              <span id="networkZoomLabel" class="text-[10px] font-mono text-sage px-1.5 border-r border-petrol/80">100%</span>
+              <button onclick="zoomMapByButton('network', 1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer" title="Aumentar Zoom">+</button>
+              <button onclick="zoomMapByButton('network', 1/1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer" title="Reduzir Zoom">−</button>
+              <button onclick="focusActivePathOnMap()" class="px-2 py-0.5 rounded hover:bg-petrol text-sage text-[10.5px] font-mono font-semibold cursor-pointer" title="Enquadrar rota calculada">Focar Rota</button>
+              <button onclick="resetMapView('network')" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite text-[10.5px] font-mono font-semibold cursor-pointer" title="Enquadrar grafo inteiro">Ajustar Tudo</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           PÁGINA 3: MÉTRICAS DA REDE
+           ========================================================================= -->
+      <section id="page-uc06" class="page-section hidden space-y-5 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Análise Estrutural e Topológica</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Métricas da Rede</h2>
+            <p class="text-[12px] text-petrol mt-0.5">Explore grau, densidade, conectividade global, centralidades e coeficientes de agrupamento.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-sub-deg" onclick="switchMetricSubtab('sub-deg')" class="metric-tab active px-3.5 py-2 rounded-[10px] border border-mutedgreen bg-offwhite text-deepnavy text-[11.5px] font-semibold cursor-pointer transition-all">
+              Grau & Densidade
+            </button>
+            <button id="btn-sub-cent" onclick="switchMetricSubtab('sub-cent')" class="metric-tab px-3.5 py-2 rounded-[10px] border border-mutedgreen bg-offwhite text-deepnavy text-[11.5px] font-semibold cursor-pointer transition-all">
+              Centralidades & k-Core
+            </button>
+            <button id="btn-sub-clust" onclick="switchMetricSubtab('sub-clust')" class="metric-tab px-3.5 py-2 rounded-[10px] border border-mutedgreen bg-offwhite text-deepnavy text-[11.5px] font-semibold cursor-pointer transition-all">
+              Agrupamento & Triângulos
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-PAINEL 1: GRAU, DENSIDADE E HISTOGRAMA P(k) -->
+        <div id="sub-deg" class="metric-subpanel space-y-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-offwhite p-4 rounded-[14px] border-2 border-sage">
+              <span class="text-[11px] text-petrol block">Grau Médio</span>
+              <strong id="metricAvgDeg" class="text-[22px] font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+            <div class="bg-offwhite p-4 rounded-[14px] border-2 border-sage">
+              <span class="text-[11px] text-petrol block">Densidade da Rede</span>
+              <strong id="metricDensity" class="text-[22px] font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+            <div class="bg-offwhite p-4 rounded-[14px] border-2 border-sage">
+              <span class="text-[11px] text-petrol block">Distância Média / Diâmetro</span>
+              <strong id="metricDistDiam" class="text-[22px] font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+            <div class="bg-offwhite p-4 rounded-[14px] border-2 border-sage">
+              <span class="text-[11px] text-petrol block">Maior Componente Conexa</span>
+              <strong id="metricGiantComp" class="text-[22px] font-bold font-mono text-[#15803D] mt-1 block"></strong>
+            </div>
+          </div>
+
+          <div class="bg-offwhite rounded-2xl border-2 border-sage p-5">
+            <h3 class="font-bold text-[13.5px] text-deepnavy mb-3">Histograma da Distribuição de Grau P(k)</h3>
+            <div id="degreeHistogramContainer" class="h-44 flex items-end gap-4 pt-7 pb-2 px-5 bg-sagelight rounded-xl border border-sage"></div>
+          </div>
+        </div>
+
+        <!-- SUB-PAINEL 2: CENTRALIDADES & K-CORE -->
+        <div id="sub-cent" class="metric-subpanel hidden space-y-4">
+          <div class="bg-offwhite rounded-2xl border-2 border-sage p-5">
+            <h3 class="font-bold text-[13.5px] text-deepnavy mb-3">Top Vértices por Centralidades (Closeness, Harmônica, Betweenness de Brandes, PageRank e k-Core)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse font-mono">
+                <thead>
+                  <tr class="bg-sage text-deepnavy font-sans font-bold text-[11.5px]">
+                    <th class="p-2.5 rounded-l-md">Vértice</th>
+                    <th class="p-2.5">Closeness</th>
+                    <th class="p-2.5">Harmônica</th>
+                    <th class="p-2.5">Betweenness</th>
+                    <th class="p-2.5">PageRank</th>
+                    <th class="p-2.5 rounded-r-md">k-Core</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-sage" id="centralityTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PAINEL 3: AGRUPAMENTO & TRIÂNGULOS -->
+        <div id="sub-clust" class="metric-subpanel hidden space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-offwhite p-5 rounded-2xl border-2 border-sage">
+              <span class="text-xs text-petrol block">Coeficiente de Clustering Médio</span>
+              <strong id="metricAvgClust" class="text-3xl font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+            <div class="bg-offwhite p-5 rounded-2xl border-2 border-sage">
+              <span class="text-xs text-petrol block">Transitividade Global</span>
+              <strong id="metricTransitivity" class="text-3xl font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+            <div class="bg-offwhite p-5 rounded-2xl border-2 border-sage">
+              <span class="text-xs text-petrol block">Total de Triângulos</span>
+              <strong id="metricTotalTriangles" class="text-3xl font-bold font-mono text-deepnavy mt-1 block"></strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           PÁGINA 4: COMUNIDADES (MAPA INTERATIVO COMPLETO)
+           ========================================================================= -->
+      <section id="page-uc11" class="page-section hidden space-y-4 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Estrutura Modular e Particionamento</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Detecção de Comunidades e Grafo Particionado</h2>
+            <p class="text-[12px] text-petrol mt-0.5">Execute Louvain ou Propagação de Rótulos e explore todos os clusters do grafo com zoom e arraste.</p>
+          </div>
+          <button onclick="filterCommunityOnGraph('all')" id="btnShowAllCommunities" class="px-4 py-2 rounded-[10px] bg-deepnavy hover:bg-petrol text-offwhite text-[11.5px] font-semibold cursor-pointer transition-all shrink-0">
+            Mostrar Todas as Comunidades
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-deepnavy text-offwhite p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+            <span class="text-[10px] font-mono uppercase text-sage">QUALIDADE DA PARTIÇÃO</span>
+            <div class="text-2xl font-bold font-mono text-offwhite mt-1" id="modularityScore"></div>
+            <span id="modularitySubtext" class="text-[10.5px] text-mutedgreen mt-1"></span>
+          </div>
+
+          <div class="bg-offwhite p-4 rounded-2xl border-2 border-sage flex flex-col justify-between">
+            <span class="text-[10px] font-mono uppercase text-petrol">COMUNIDADES DETECTADAS</span>
+            <div class="text-2xl font-bold font-mono text-deepnavy mt-1" id="commCount"></div>
+            <span class="text-[10.5px] text-petrol mt-1">Coloridos e delimitados no grafo</span>
+          </div>
+
+          <div class="bg-offwhite p-4 rounded-2xl border-2 border-sage flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono uppercase text-petrol font-bold">PARTIÇÃO REAL (NMI)</span>
+              <span id="nmiScoreVal" class="font-mono text-[13px] font-bold text-deepnavy"></span>
+            </div>
+            <div class="w-full h-2.5 bg-sagelight rounded-full overflow-hidden border border-mutedgreen my-2">
+              <div id="nmiBar" class="bg-petrol h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <span class="text-[10.5px] text-petrol">Informação Mútua Normalizada</span>
+          </div>
+
+          <div class="bg-offwhite p-4 rounded-2xl border-2 border-sage flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono uppercase text-petrol font-bold">PARTIÇÃO REAL (ARI)</span>
+              <span id="ariScoreVal" class="font-mono text-[13px] font-bold text-deepnavy"></span>
+            </div>
+            <div class="w-full h-2.5 bg-sagelight rounded-full overflow-hidden border border-mutedgreen my-2">
+              <div id="ariBar" class="bg-deepnavy h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <span id="gtComparisonLabel" class="text-[10.5px] text-petrol">Índice Rand Ajustado</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+          <div class="lg:col-span-4 space-y-3.5">
+            <div class="bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-3 shadow-sm">
+              <div class="flex items-center justify-between border-b border-sage pb-2">
+                <h3 class="font-bold text-[13.5px] text-deepnavy">Configurar Algoritmo</h3>
+                <span class="text-[9.5px] font-mono font-semibold bg-sage px-2 py-0.5 rounded text-deepnavy">Rápido</span>
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-semibold text-petrol mb-1">Método de Detecção</label>
+                <select id="commAlgo" onchange="runCommunityDetection()" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-1.5 text-[11px] font-semibold text-deepnavy cursor-pointer">
+                  <option value="Louvain">Método de Louvain (Modularidade) ▾</option>
+                  <option value="LPA">Propagação de Rótulos (Label Propagation) ▾</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10.5px] font-semibold text-petrol mb-1">Semente (Seed)</label>
+                  <input type="number" id="commSeedInput" value="42" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-3 py-1.5 text-[11.5px] font-mono text-deepnavy">
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-semibold text-petrol mb-1">Envoltórias</label>
+                  <label class="flex items-center gap-1.5 text-[11.5px] font-medium text-deepnavy mt-1.5 cursor-pointer">
+                    <input type="checkbox" id="showClusterHullsToggle" checked onchange="drawMap('communities')" class="accent-petrol w-4 h-4 rounded">
+                    <span>Exibir Halos</span>
+                  </label>
+                </div>
+              </div>
+
+              <button id="btnDetectComm" onclick="runCommunityDetection(this)" class="btn-primary w-full py-2 rounded-[9px] text-[11.5px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>✦ Detectar Comunidades</span>
+              </button>
+            </div>
+
+            <div class="bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-2 shadow-sm">
+              <div class="flex items-center justify-between border-b border-sage pb-2">
+                <h4 class="font-bold text-[10px] uppercase tracking-wider text-deepnavy">Comunidades Geradas</h4>
+                <button onclick="filterCommunityOnGraph('all')" class="text-[10.5px] font-semibold text-petrol hover:underline cursor-pointer">Ver todas</button>
+              </div>
+              <div class="space-y-1.5" id="communityLegendList"></div>
+            </div>
+          </div>
+
+          <!-- Mapa Interativo Completo de Comunidades -->
+          <div class="lg:col-span-8 bg-deepnavy rounded-2xl border-2 border-petrol shadow-md relative overflow-hidden h-[540px]">
+            <canvas id="communitiesCanvas" class="w-full h-full map-canvas block"></canvas>
+
+            <div class="absolute top-3.5 left-3.5 bg-deepnavy/95 border border-petrol rounded-[10px] px-3 py-1.5 text-[11px] text-offwhite flex items-center gap-2 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#22C55E]"></span>
+              <span id="commCanvasStatusLabel" class="font-semibold"></span>
+            </div>
+
+            <!-- Busca de Nó no Mapa de Comunidades -->
+            <div class="absolute top-3.5 right-3.5 flex items-center gap-1.5">
+              <div class="flex items-center gap-1 bg-deepnavy/95 border border-petrol rounded-xl px-2.5 py-1 shadow-md">
+                <i class="ph ph-magnifying-glass text-sage text-xs"></i>
+                <input type="text" id="searchNodeComm" placeholder="Localizar nó..." onkeydown="if(event.key==='Enter')searchAndFlyToNode('communities', this.value)" class="bg-transparent text-xs font-mono text-offwhite focus:outline-none w-24">
+                <button onclick="searchAndFlyToNode('communities', document.getElementById('searchNodeComm').value)" class="px-2 py-0.5 rounded bg-petrol text-offwhite text-[10px] font-semibold cursor-pointer hover:bg-mutedgreen">Ir</button>
+              </div>
+              <button onclick="filterCommunityOnGraph('all')" class="px-3 py-1.5 rounded-xl bg-petrol hover:bg-mutedgreen text-offwhite text-[10.5px] font-semibold cursor-pointer transition-colors shadow-md">
+                Resetar Filtro
+              </button>
+            </div>
+
+            <!-- Mini-mapa Comunidades -->
+            <div class="absolute bottom-3.5 left-3.5 bg-deepnavy/95 border border-petrol rounded-xl p-1 shadow-md">
+              <canvas id="communitiesMinimap" width="116" height="86" class="rounded-lg cursor-pointer block"></canvas>
+            </div>
+
+            <!-- Controles de Zoom Comunidades -->
+            <div class="absolute bottom-3.5 right-3.5 flex items-center gap-1 bg-deepnavy/95 px-2.5 py-1.5 rounded-xl border border-petrol shadow-md">
+              <span id="communitiesZoomLabel" class="text-[10px] font-mono text-sage px-1.5 border-r border-petrol/80">100%</span>
+              <button onclick="zoomMapByButton('communities', 1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer">+</button>
+              <button onclick="zoomMapByButton('communities', 1/1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer">−</button>
+              <button onclick="resetMapView('communities')" class="px-2 py-0.5 rounded hover:bg-petrol text-sage text-[10.5px] font-mono font-semibold cursor-pointer">Ajustar Tudo</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           PÁGINA 5: INFLUENCIADORES & SIR (MAPA INTERATIVO COMPLETO)
+           ========================================================================= -->
+      <section id="page-uc14" class="page-section hidden space-y-4 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Difusão de Informação e Epidemiologia em Redes</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Identificação de Influenciadores e Propagação SIR</h2>
+            <p class="text-[12px] text-petrol mt-0.5">Configure β e γ, navegue pelo mapa completo da rede e compare o alcance dos influenciadores.</p>
+          </div>
+          <span class="px-3.5 py-1.5 rounded-[10px] bg-deepnavy text-sage font-mono text-[11px] font-semibold shrink-0">
+            Melhor Preditor: PageRank / k-Core
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+          <div class="lg:col-span-4 bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-3 shadow-sm h-[400px] flex flex-col justify-between">
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between border-b border-sage pb-2">
+                <h3 class="font-bold text-[13.5px] text-deepnavy">Parâmetros da Simulação SIR</h3>
+                <span class="text-[9.5px] font-mono font-semibold bg-sage px-2 py-0.5 rounded text-deepnavy">Monte Carlo</span>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] font-semibold text-petrol mb-0.5">
+                  <span>Taxa de Infecção / Transmissão (β)</span>
+                  <span id="sirBetaVal" class="font-mono font-bold text-deepnavy">0.08</span>
+                </div>
+                <input type="range" id="sirBeta" min="0.01" max="0.30" step="0.01" value="0.08" oninput="document.getElementById('sirBetaVal').innerText=Number(this.value).toFixed(2)" class="w-full cursor-pointer">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] font-semibold text-petrol mb-0.5">
+                  <span>Taxa de Recuperação (γ)</span>
+                  <span id="sirGammaVal" class="font-mono font-bold text-deepnavy">0.02</span>
+                </div>
+                <input type="range" id="sirGamma" min="0.01" max="0.20" step="0.01" value="0.02" oninput="document.getElementById('sirGammaVal').innerText=Number(this.value).toFixed(2)" class="w-full cursor-pointer">
+              </div>
+
+              <div>
+                <label class="block text-[10.5px] font-semibold text-petrol mb-1">Nó Paciente-Zero (Influenciador Semente)</label>
+                <select id="sirSeedNodeSelect" onchange="selectInfluencerOnGraph(this.value)" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1.5 text-[11px] font-semibold text-deepnavy cursor-pointer">
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10.5px] font-medium text-petrol mb-0.5">Simulações</label>
+                  <input type="number" id="sirRunsInput" value="30" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-medium text-petrol mb-0.5">Semente (Seed)</label>
+                  <input type="number" id="sirSeedInput" value="42" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
+                </div>
+              </div>
+
+              <button id="btnRunSir" onclick="runSIRSimulation(this)" class="btn-primary w-full py-2 rounded-[10px] text-[11.5px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>▶ Simular Propagação no Grafo</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center pt-1">
+              <div class="p-2 rounded-[10px] bg-sagelight border border-sage">
+                <span class="text-[9.5px] font-bold text-petrol uppercase block">INFECTADOS</span>
+                <strong id="sirStatInfected" class="text-[13.5px] font-mono font-bold text-[#EF4444]"></strong>
+              </div>
+              <div class="p-2 rounded-[10px] bg-sagelight border border-sage">
+                <span class="text-[9.5px] font-bold text-petrol uppercase block">RECUPERADOS</span>
+                <strong id="sirStatRecovered" class="text-[13.5px] font-mono font-bold text-[#15803D]"></strong>
+              </div>
+              <div class="p-2 rounded-[10px] bg-sagelight border border-sage">
+                <span class="text-[9.5px] font-bold text-petrol uppercase block">SUSCETÍVEIS</span>
+                <strong id="sirStatSusceptible" class="text-[13.5px] font-mono font-bold text-deepnavy"></strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mapa Interativo Completo de Propagação SIR -->
+          <div class="lg:col-span-8 bg-deepnavy rounded-2xl border-2 border-petrol shadow-md relative overflow-hidden h-[400px]">
+            <canvas id="influencersCanvas" class="w-full h-full map-canvas block"></canvas>
+
+            <div class="absolute top-3.5 left-3.5 bg-[#DCFCE7]/95 border-2 border-[#22C55E] text-[#15803D] px-3 py-1 rounded-[9px] text-[10.5px] font-bold font-mono shadow-xs">
+              <span id="sirGraphHeaderBadge"></span>
+            </div>
+
+            <!-- Busca de Nó no Mapa SIR -->
+            <div class="absolute top-3.5 right-3.5 flex items-center gap-1 bg-deepnavy/95 border border-petrol rounded-xl px-2.5 py-1 shadow-md">
+              <i class="ph ph-magnifying-glass text-sage text-xs"></i>
+              <input type="text" id="searchNodeSir" placeholder="Localizar nó..." onkeydown="if(event.key==='Enter')searchAndFlyToNode('influencers', this.value)" class="bg-transparent text-xs font-mono text-offwhite focus:outline-none w-24">
+              <button onclick="searchAndFlyToNode('influencers', document.getElementById('searchNodeSir').value)" class="px-2 py-0.5 rounded bg-petrol text-offwhite text-[10px] font-semibold cursor-pointer hover:bg-mutedgreen">Ir</button>
+            </div>
+
+            <!-- Mini-mapa SIR -->
+            <div class="absolute bottom-3.5 left-3.5 bg-deepnavy/95 border border-petrol rounded-xl p-1 shadow-md">
+              <canvas id="influencersMinimap" width="116" height="86" class="rounded-lg cursor-pointer block"></canvas>
+            </div>
+
+            <!-- Controles de Zoom SIR -->
+            <div class="absolute bottom-3.5 right-3.5 flex items-center gap-1 bg-deepnavy/95 px-2.5 py-1.5 rounded-xl border border-petrol shadow-md">
+              <span id="influencersZoomLabel" class="text-[10px] font-mono text-sage px-1.5 border-r border-petrol/80">100%</span>
+              <button onclick="zoomMapByButton('influencers', 1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer">+</button>
+              <button onclick="zoomMapByButton('influencers', 1/1.35)" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite font-bold text-sm cursor-pointer">−</button>
+              <button onclick="focusActiveSirSeedOnMap()" class="px-2 py-0.5 rounded hover:bg-petrol text-sage text-[10.5px] font-mono font-semibold cursor-pointer">Focar Semente</button>
+              <button onclick="resetMapView('influencers')" class="px-2 py-0.5 rounded hover:bg-petrol text-offwhite text-[10.5px] font-mono font-semibold cursor-pointer">Ajustar Tudo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div class="lg:col-span-6 bg-offwhite rounded-2xl border-2 border-sage p-4 flex flex-col justify-between shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div>
+                <h3 class="font-bold text-[13px] text-deepnavy" id="sirChartTitle"></h3>
+                <p class="text-[10.5px] text-petrol">Evolução temporal da propagação da informação nos passos de tempo t</p>
+              </div>
+              <div class="text-[10.5px] font-mono font-bold text-deepnavy">
+                — S(t) &nbsp; — I(t) &nbsp; — R(t)
+              </div>
+            </div>
+
+            <svg id="sirSvgChart" viewBox="0 0 532 132" class="w-full h-36 bg-sagelight rounded-[10px] border border-sage p-1">
+              <path id="sirSusceptibleCurve" d="" fill="none" stroke="#91AA9D" stroke-width="3" stroke-dasharray="5 3"/>
+              <path id="sirInfectedCurve" d="" fill="none" stroke="#EF4444" stroke-width="3.5"/>
+              <path id="sirRecoveredCurve" d="" fill="none" stroke="#22C55E" stroke-width="3"/>
+            </svg>
+
+            <div class="mt-2.5 px-3 py-2 rounded-lg bg-deepnavy text-offwhite flex flex-wrap items-center justify-between gap-2 text-[10px]">
+              <span id="sirPearsonFooter"></span>
+              <span id="sirReachFooter" class="font-mono text-sage font-bold text-[10.5px]"></span>
+            </div>
+          </div>
+
+          <div class="lg:col-span-6 bg-offwhite rounded-2xl border-2 border-sage p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-[13px] text-deepnavy">Ranking dos K Maiores Influenciadores</h3>
+                <p class="text-[10.5px] text-petrol">Clique em uma linha para simular e focar o influenciador no mapa acima</p>
+              </div>
+              <span class="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded bg-sage text-deepnavy">Top 5</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr class="bg-sage text-deepnavy font-bold text-[10.5px]">
+                    <th class="p-2 rounded-l-md">Rank</th>
+                    <th class="p-2">Vértice</th>
+                    <th class="p-2">Grau</th>
+                    <th class="p-2">PageRank</th>
+                    <th class="p-2">k-Core</th>
+                    <th class="p-2 rounded-r-md">Alcance SIR</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-sage font-mono" id="topInfluencersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           PÁGINA 6: RESULTADOS & EXPORTAÇÃO
+           ========================================================================= -->
+      <section id="page-uc16" class="page-section hidden space-y-5 max-w-[1220px] mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-sage pb-3">
+          <div>
+            <span class="px-2.5 py-0.5 rounded bg-sage text-deepnavy font-mono text-[10px] font-semibold">Relatório da Sessão</span>
+            <h2 class="text-[22px] font-bold text-deepnavy mt-1 leading-tight">Resultados Consolidados e Exportação</h2>
+            <p class="text-[12px] text-petrol mt-0.5">Consulte as tabelas de ranking, métricas calculadas e salve os resultados estruturados em arquivo JSON.</p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btnCopyJson" onclick="copyJsonToClipboard(this)" class="btn-secondary px-3.5 py-2 rounded-[10px] text-[11.5px] font-semibold flex items-center gap-1.5 cursor-pointer">
+              <span>⎘ Copiar JSON</span>
+            </button>
+            <button id="btnExportJson" onclick="quickExportJSON(this)" class="btn-primary px-4 py-2 rounded-[10px] text-[11.5px] font-semibold flex items-center gap-1.5 cursor-pointer">
+              <span>↓ Exportar Resultados (JSON)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-offwhite rounded-2xl border-2 border-sage p-5 space-y-3">
+            <h3 class="font-bold text-[14px] text-deepnavy">Ranking Geral de Vértices e Influência</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-sage text-deepnavy font-bold text-[11px]">
+                    <th class="p-2.5 rounded-l-md">Vértice</th>
+                    <th class="p-2.5">Grau</th>
+                    <th class="p-2.5">PageRank</th>
+                    <th class="p-2.5">Comunidade</th>
+                    <th class="p-2.5 rounded-r-md">Alcance SIR</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-sage font-mono" id="consolidatedRankingBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-deepnavy text-offwhite rounded-2xl border-2 border-petrol p-5 space-y-2.5">
+            <div class="flex items-center justify-between text-xs text-sage font-mono">
+              <span>Estrutura de Exportação</span>
+              <span>resultados_sessao.json</span>
+            </div>
+            <pre id="jsonPreviewBlock" class="text-xs font-mono text-offwhite overflow-x-auto p-3.5 rounded-[10px] bg-codebg leading-relaxed m-0 max-h-[420px]"></pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MOTOR DE MAPA INTERATIVO DE GRAFOS (ESTILO GOOGLE MAPS) ================= -->
+  <script>
+/*__SCRIPTS_JS__*/
+  </script>
+</body>
+</html>
