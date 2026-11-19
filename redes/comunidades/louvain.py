@@ -9,7 +9,7 @@ from redes.nucleo.grafo import Grafo, No
 from redes.comunidades.modularidade import modularidade as _modularidade_real
 
 
-def louvain(g: Grafo, seed: int | None = 42) -> tuple[dict[No, int], float]:
+def louvain(g: Grafo, semente: int | None = None) -> tuple[dict[No, int], float]:
     """Detecta comunidades pelo método de Louvain (Blondel et al., 2008).
 
     Executa iterações de duas fases até a modularidade Q convergir:
@@ -24,7 +24,7 @@ def louvain(g: Grafo, seed: int | None = 42) -> tuple[dict[No, int], float]:
 
     Args:
         g: Grafo não direcionado (ponderado ou não).
-        seed: semente para embaralhamento da ordem de visita dos nós.
+        semente: semente para embaralhamento da ordem de visita dos nós.
 
     Returns:
         Tupla (partição, Q) onde partição é um dict {nó_original: id_comunidade}
@@ -35,13 +35,13 @@ def louvain(g: Grafo, seed: int | None = 42) -> tuple[dict[No, int], float]:
 
     # guarda o grafo original para calcular Q real no final
     g_original = g
-    rng = random.Random(seed)
+    rng = random.Random(semente)
 
     # --- pré-computa o grau ponderado de cada nó e 2m ---
     kv: dict[No, float] = {}
     dois_m = 0.0
     for v in g.nos():
-        grau_v = sum(g.peso(v, w) for w in g.vizinhos(v))
+        grau_v = sum(g.peso(v, w) * (2 if w == v else 1) for w in g.vizinhos(v))
         kv[v] = grau_v
         dois_m += grau_v
     # dois_m = soma de todos os graus = 2 * (soma dos pesos das arestas)
@@ -78,8 +78,9 @@ def louvain(g: Grafo, seed: int | None = 42) -> tuple[dict[No, int], float]:
                         k_v_para[comunidade_de[w]] += g.peso(v, w)
 
                 # remove v da sua comunidade atual
+                laco = 2.0 * g.peso(v, v) if g.tem_aresta(v, v) else 0.0
                 sigma_tot[c_atual] -= kv[v]
-                sigma_in[c_atual] -= 2.0 * k_v_para.get(c_atual, 0.0)
+                sigma_in[c_atual] -= 2.0 * k_v_para.get(c_atual, 0.0) + laco
 
                 melhor_c = c_atual
                 melhor_dq = 0.0  # só move se ganho for positivo
@@ -96,7 +97,7 @@ def louvain(g: Grafo, seed: int | None = 42) -> tuple[dict[No, int], float]:
                 # reinsere v na melhor comunidade (pode ser a mesma)
                 comunidade_de[v] = melhor_c
                 sigma_tot[melhor_c] += kv[v]
-                sigma_in[melhor_c] += 2.0 * k_v_para.get(melhor_c, 0.0)
+                sigma_in[melhor_c] += 2.0 * k_v_para.get(melhor_c, 0.0) + laco
 
                 if melhor_c != c_atual:
                     melhorou = True
@@ -194,7 +195,7 @@ def _agregar(
     novo_kv: dict[No, float] = {}
     novo_dois_m = 0.0
     for sn in g_novo.nos():
-        grau = sum(g_novo.peso(sn, w) for w in g_novo.vizinhos(sn))
+        grau = sum(g_novo.peso(sn, w) * (2 if w == sn else 1) for w in g_novo.vizinhos(sn))
         novo_kv[sn] = grau
         novo_dois_m += grau
 

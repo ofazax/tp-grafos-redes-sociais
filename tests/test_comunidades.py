@@ -95,8 +95,8 @@ def test_louvain_particao_valida():
 def test_louvain_determinismo():
     # Mesma semente → mesmo resultado
     g, _ = carregar_karate_e_clubes()
-    p1, q1 = louvain(g, seed=42)
-    p2, q2 = louvain(g, seed=42)
+    p1, q1 = louvain(g, semente=42)
+    p2, q2 = louvain(g, semente=42)
     assert p1 == p2
     assert q1 == pytest.approx(q2)
 
