@@ -52,8 +52,8 @@ def test_rotulos_particao_valida():
 
 def test_rotulos_determinismo():
     g, _ = carregar_karate_e_clubes()
-    p1 = propagacao_de_rotulos(g, seed=7)
-    p2 = propagacao_de_rotulos(g, seed=7)
+    p1 = propagacao_de_rotulos(g, semente=7)
+    p2 = propagacao_de_rotulos(g, semente=7)
     assert p1 == p2
 
 
