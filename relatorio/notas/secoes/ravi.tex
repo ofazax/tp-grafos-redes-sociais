@@ -13,9 +13,9 @@
 \toprule
 Função & Arquivo & Complexidade & Situação \\
 \midrule
-\codigo{limiar\_epidemico} & \codigo{aplicacao/influencia.py} & $O(n)$ & \afazer \\
-\codigo{simular\_sir} & \codigo{aplicacao/influencia.py} & \falta & \afazer \\
-\codigo{poder\_de\_espalhamento} & \codigo{aplicacao/influencia.py} & \falta & \afazer \\
+\codigo{limiar\_epidemico} & \codigo{aplicacao/influencia.py} & $O(n)$~\cite{newman2002} & \feito \\
+\codigo{simular\_sir} (uma rodada) & \codigo{aplicacao/influencia.py} & $O(n + m)$ no pior caso, com $\gamma = 1$ & \feito \\
+\codigo{poder\_de\_espalhamento} & \codigo{aplicacao/influencia.py} & $O(M \cdot n \cdot (n + m))$ no pior caso~\cite{kitsak2010} & \feito \\
 \codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n^2)$ ingênuo~\cite{kendall1938} & \afazer \\
 \codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & --- & \afazer \\
 \bottomrule
@@ -28,6 +28,16 @@ Função & Arquivo & Complexidade & Situação \\
 \begin{itemize}[leftmargin=*]
   \item SIR em tempo discreto, com $\beta$ um pouco acima do limiar epidêmico (0,0079 na Twitch PT),
         por exemplo 0,012, e $\gamma = 1$, seguindo~\cite{kitsak2010}. \pendente{confirmar os valores usados}
+  \item O limiar é $\beta_c = \langle k \rangle / (\langle k^2 \rangle - \langle k \rangle)$~\cite{newman2002}:
+        com $\gamma = 1$, $\beta$ é a chance de cada aresta transmitir, e o SIR vira percolação de
+        arestas. Sem nó de grau 2 ou mais, o limiar é infinito. Só vale para grafo não direcionado.
+  \item A simulação usa listas indexadas $0..n-1$ e um \codigo{bytearray} de estados que é zerado só
+        nos nós atingidos: cada rodada custa o tamanho do surto, e não $O(n)$. Na Twitch PT, com
+        $\beta = 0{,}012$ e $M = 100$, as 191.200 rodadas levam cerca de 22\,s.
+  \item Um único gerador \codigo{random.Random(semente)} serve a todas as rodadas: com a mesma
+        semente, o resultado se repete.
+  \item O \codigo{simular\_sir} aceita $\gamma < 1$ (o infectado tenta de novo a cada passo), porque
+        o caso de uso UC14 deixa o usuário escolher $\gamma$; o experimento usa $\gamma = 1$.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -36,9 +46,14 @@ Função & Arquivo & Complexidade & Situação \\
 \toprule
 Teste & Base & Obtido & Referência \\
 \midrule
-SIR com $\beta = 0$ atinge só os iniciais; $\beta = \gamma = 1$ num conexo atinge todos & sintético & \falta & --- \\
+SIR com $\beta = 0$ atinge só os iniciais; $\beta = \gamma = 1$ num conexo atinge todos & sintético, Karate & ok & --- \\
+Alcance com $\beta = 1$ é o tamanho da componente (Hypothesis) & aleatórios & ok & --- \\
+Alcance médio na aresta única, $(1+\beta)/2$, com $\beta = 0{,}3$ & sintético & 0,65 ($\pm$0,01) & 0,65 \\
+Alcance médio na estrela ($n = 10$, $\beta = 0{,}4$), do centro e de uma folha & sintético & ok ($\pm$0,01) & $0{,}46$ e $0{,}268$ \\
+Alcance com $\gamma = 0{,}5$, $\beta = 0{,}2$ na aresta única & sintético & ok ($\pm$0,01) & $2/3$ \\
+Limiar: completo $1/(n-2)$, estrela $2/(n-2)$, ciclo 1 & sintético & ok & fórmulas \\
 Kendall de rankings iguais e invertidos & sintético & \falta & 1 e $-1$ \\
-Limiar epidêmico & Twitch PT & \falta & 0,0079 \\
+Limiar epidêmico & Twitch PT & 0,007876 & 0,0079 \\
 $\tau$ entre grau e visualizações & Twitch PT & \falta & $\approx$ 0,43 (NetworkX) \\
 $\tau$ entre PageRank / k-core e visualizações & Twitch PT & \falta & $\approx$ 0,44 / 0,40 \\
 \bottomrule
@@ -55,5 +70,6 @@ o k-core prevê os espalhadores melhor que o grau?}
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
-  \registro{AAAA-MM-DD}{\pendente{primeira entrada}}
+  \registro{2026-11-19}{limiar epidêmico, SIR em tempo discreto e alcance médio por Monte Carlo
+    em \codigo{aplicacao/influencia.py}, com 37 testes em \codigo{tests/test\_influencia.py}.}
 \end{description}
