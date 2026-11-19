@@ -14,25 +14,27 @@ title Diagrama de Atividades — Detecção de Comunidades por Louvain
 
 start
 
-:Recebe o Grafo e a semente aleatória (seed);
+:Recebe o Grafo e a semente aleatória;
 :Inicializa cada nó v em sua própria comunidade C_v = {v};
 :Calcula pesos dos nós, peso total m e soma incidente;
 
 repeat
   partition "Fase 1: Otimização Local da Modularidade" {
-    :Embaralha a ordem de visitação dos nós (reprodutibilidade via seed);
     repeat
-      :Seleciona o próximo nó v;
-      :Identifica as comunidades vizinhas a v;
-      :Calcula o ganho Delta Q para cada comunidade vizinha;
-      if (Existe vizinho com Delta Q > 0?) then (sim)
-        :Remove v da comunidade atual;
-        :Insere v na comunidade vizinha de maior ganho Delta Q;
-        :Atualiza pesos internos e incidentes da comunidade;
-      else (não)
-        :Mantém v na comunidade atual;
-      endif
-    repeat while (Existem mais nós a inspecionar na passada?) is (sim)
+      :Embaralha a ordem de visitação dos nós (reprodutibilidade via semente);
+      repeat
+        :Seleciona o próximo nó v;
+        :Identifica as comunidades vizinhas a v;
+        :Calcula o ganho Delta Q para cada comunidade vizinha;
+        if (Existe vizinho com Delta Q > 0?) then (sim)
+          :Remove v da comunidade atual;
+          :Insere v na comunidade vizinha de maior ganho Delta Q;
+          :Atualiza pesos internos e incidentes da comunidade;
+        else (não)
+          :Mantém v na comunidade atual;
+        endif
+      repeat while (Existem mais nós a inspecionar na passada?) is (sim)
+    repeat while (Algum nó mudou de comunidade nesta passada?) is (sim)
   }
 
   if (Houve ganho de modularidade significativo nesta iteração?) then (sim)
