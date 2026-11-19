@@ -1,15 +1,26 @@
+"""Testes de detecção de comunidades, modularidade, Louvain, LPA, NMI e ARI."""
+
+from pathlib import Path
+import random
+import pytest
 
 from redes.comunidades.modularidade import modularidade
 from redes.comunidades.louvain import louvain
 from redes.comunidades.rotulos import propagacao_de_rotulos
-from redes.co
-ent / "dados" / "karate_arestas.txt"
+from redes.comunidades.avaliacao import nmi, ari
+from redes.nucleo.grafo import Grafo
+
+ARQUIVO_ARESTAS = Path(__file__).parent / "dados" / "karate_arestas.txt"
 ARQUIVO_CLUBES = Path(__file__).parent / "dados" / "karate_clubes.txt"
 
 
 def carregar_karate_e_clubes() -> tuple[Grafo, dict[int, int]]:
-    g = GraeR a in f:
- linha.strip()
+    """Carrega o grafo do Karate Club e a partição real da cisão em dois grupos."""
+    g = Grafo()
+    with open(ARQUIVO_ARESTAS, encoding="utf-8") as f:
+        for linha in f:
+            linha = linha.strip()
+            if not linha or linha.startswith("#"):
                 continue
             u, v = linha.split()
             g.adicionar_aresta(int(u), int(v))
@@ -34,10 +45,26 @@ def test_modularidade_grafo_vazio():
     g = Grafo()
     assert modularidade(g, {}) == 0.0
 
-i: tnam), (2 4: 1, 5: 1}
-ert modularidade(g, particao) == pytest.approx(0.5)
+
+def test_modularidade_comunidade_unica():
+    # Em qualquer grafo, colocar todos os nós na mesma comunidade resulta em Q = 0.0
+    g = Grafo.de_arestas([(0, 1), (1, 2), (2, 0), (2, 3)])
+    particao = {0: 0, 1: 0, 2: 0, 3: 0}
+    assert modularidade(g, particao) == pytest.approx(0.0)
 
 
+def test_modularidade_dois_componentes_isolados():
+    # Dois triângulos totalmente desconexos: {0,1,2} e {3,4,5}
+    # Resposta teórica exata: Q = 0.5
+    g = Grafo.de_arestas([
+        (0, 1), (1, 2), (2, 0),
+        (3, 4), (4, 5), (5, 3)
+    ])
+    particao = {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1}
+    assert modularidade(g, particao) == pytest.approx(0.5)
+
+
+def test_modularidade_divisao_real_karate():
     g, particao_real = carregar_karate_e_clubes()
     q = modularidade(g, particao_real)
     assert q == pytest.approx(0.3582, abs=1e-3)
@@ -64,9 +91,15 @@ def test_louvain_particao_valida():
 def test_louvain_determinismo():
     g, _ = carregar_karate_e_clubes()
     p1, q1 = louvain(g, semente=42)
+    p2, q2 = louvain(g, semente=42)
+    assert p1 == p2
+    assert q1 == pytest.approx(q2)
+
 
 def test_louvain_q_karate():
-    g, _ = carregar_karate_e_clubes().42]"
+    g, _ = carregar_karate_e_clubes()
+    _, q = louvain(g, semente=42)
+    assert 0.39 <= q <= 0.42, f"Q={q:.4f} fora do intervalo esperado [0.39, 0.42]"
 
 
 def test_louvain_q_maior_que_divisao_real():
@@ -82,12 +115,15 @@ def test_louvain_q_maior_que_divisao_real():
 # Testes de Propagação de Rótulos (LPA)
 # -------------------------------------------------------------
 
+def test_rotulos_grafo_vazio():
     g = Grafo()
-    assert propagacao_de_rot
+    assert propagacao_de_rotulos(g) == {}
 
-def test_rotulos_particao_valida():    g, _ = carregar_karate_e_clubes()
+
+def test_rotulos_particao_valida():
+    g, _ = carregar_karate_e_clubes()
     particao = propagacao_de_rotulos(g)
-et(particao.keys()) == set(g.nos())
+    assert set(particao.keys()) == set(g.nos())
     assert all(isinstance(c, int) for c in particao.values())
 
 
