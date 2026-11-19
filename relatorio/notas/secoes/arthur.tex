@@ -44,8 +44,7 @@ Função & Arquivo & Complexidade & Situação \\
   \item \textbf{Algoritmo de Louvain em duas fases:} Otimização local gulosa de $\Delta Q$ por nó 
   seguida da contração do grafo em super-nós até que nenhum ganho de modularidade seja obtido.
   \item \textbf{Propagação de rótulos (LPA):} Implementação com desempate aleatório via 
-  \codigo{random.Random(seed)}, garantindo reprodutibilidade nos testes e convergência assíncrona 
-  com embaralhamento a cada iteração.
+  \codigo{random.Random(semente)}, garantindo reprodutibilidade nos testes e convergência com critério de Raghavan et al. (2007).
   \item \textbf{Métricas NMI e ARI:} Computadas em $O(n)$ com tabelas de contingência esparsas 
   via \codigo{Counter}, sem dependência de bibliotecas externas (puro Python).
 \end{itemize}
@@ -63,7 +62,7 @@ Invariante do intervalo $[0, 1]$ (Hypothesis) & sintético & passou & $[0, 1]$ \
 Modularidade da divisão real (gabarito) & Karate & 0,3582 & 0,3582 \\
 Modularidade de comunidade única & sintético & 0,0 & 0,0 \\
 Modularidade de dois componentes desconexos & sintético & 0,5 & 0,5 \\
-Modularidade do Louvain & Karate & 0,4020 & entre 0,39 e 0,42 (máximo 0,4198) \\
+Modularidade do Louvain & Karate & 0,4198 & entre 0,39 e 0,42 (máximo 0,4198) \\
 Clustering médio, transitividade e triângulos & Twitch PT & 0,3199; 0,1310; 173.510 & 0,3199; 0,131; 173.510 \\
 Louvain & Twitch PT & 0,285 ($\approx$ 8 comunidades) & 0,286 a 0,296 ($\approx$ 7 comunidades) \\
 Clustering médio, transitividade e triângulos & ego-Facebook & \falta & 0,6055; 0,5192; 1.612.010 \\

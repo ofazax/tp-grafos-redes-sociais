@@ -1,0 +1,6 @@
+data: 2026-11-18
+processador: AMD Ryzen 5 7600X 6-Core Processor (12 threads)
+memoria: 14.7 GiB
+sistema: Linux-7.0.0-43-generic-x86_64-with-glibc2.39
+python: 3.12.3 (CPython)
+networkx: 3.7
