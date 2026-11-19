@@ -27,20 +27,14 @@ def modularidade(g: Grafo, particao: dict[No, int]) -> float:
     for v in g.nos():
         c = particao[v]
         for w in g.vizinhos(v):
-            sigma_tot[c] += g.peso(v, w)
+            sigma_tot[c] += g.peso(v, w) * (2 if w == v else 1)
 
     # 2. Percorre as arestas para computar o peso total 2m e as arestas internas
     for u, v, peso in g.arestas():
-        if u == v:
-            dois_m += peso
-            if particao[u] == particao[v]:
-                sigma_in[particao[u]] += peso
-        else:
-            dois_m += 2 * peso
-            # Se as duas pontas da aresta estão na mesma comunidade, ela é interna
-            if particao[u] == particao[v]:
-                c = particao[u]
-                sigma_in[c] += 2 * peso
+        dois_m += 2 * peso
+        # Se as duas pontas da aresta estão na mesma comunidade, ela é interna
+        if particao[u] == particao[v]:
+            sigma_in[particao[u]] += 2 * peso
 
     if dois_m == 0.0:
         return 0.0
