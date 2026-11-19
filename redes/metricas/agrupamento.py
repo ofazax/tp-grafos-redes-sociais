@@ -17,8 +17,8 @@ def triangulos(g: Grafo) -> dict[No, int]:
     # 1. Dicionário acumulador iniciado com 0 para todos os nós
     contagem: dict[No, int] = {v: 0 for v in g.nos()}
 
-    # 2. Guarda os vizinhos como conjuntos (set) para intersecção rápida O(min(k_u, k_v))
-    vizinhos = {v: set(g.vizinhos(v)) for v in g.nos()}
+    # 2. Guarda os vizinhos como conjuntos (set) excluindo laços (self-loops)
+    vizinhos = {v: set(g.vizinhos(v)) - {v} for v in g.nos()}
 
     # 3. Percorre cada aresta (u, v) do grafo
     for u, v, _ in g.arestas():
@@ -48,7 +48,7 @@ def agrupamento_local(g: Grafo) -> dict[No, float]:
 
     # 2. Calcula o coeficiente para cada nó
     for v in g.nos():
-        k = g.grau(v)
+        k = len(set(g.vizinhos(v)) - {v})
         if k < 2:
             resultado[v] = 0.0
         else:
@@ -83,8 +83,11 @@ def transitividade(g: Grafo) -> float:
     triangulos_por_no = triangulos(g)
     tres_vezes_triangulos = sum(triangulos_por_no.values())
 
-    # 2. Total de tríades na rede: soma de k * (k - 1) / 2 para todos os nós
-    total_triades = sum(g.grau(v) * (g.grau(v) - 1) // 2 for v in g.nos())
+    # 2. Total de tríades na rede: soma de k * (k - 1) / 2 para todos os nós (excluindo laços)
+    total_triades = sum(
+        len(set(g.vizinhos(v)) - {v}) * (len(set(g.vizinhos(v)) - {v}) - 1) // 2
+        for v in g.nos()
+    )
 
     if total_triades == 0:
         return 0.0

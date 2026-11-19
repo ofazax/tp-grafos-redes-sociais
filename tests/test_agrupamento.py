@@ -69,6 +69,16 @@ def test_grafo_completo_k5():
     assert transitividade(g) == 1.0
 
 
+def test_triangulo_com_laco():
+    # Triângulo (0, 1), (1, 2), (2, 0) com um laço em 0: (0, 0)
+    # Laços não devem contar como triângulos adicionais
+    g = Grafo.de_arestas([(0, 1), (1, 2), (2, 0), (0, 0)])
+    assert triangulos(g) == {0: 1, 1: 1, 2: 1}
+    assert agrupamento_local(g)[0] == pytest.approx(1.0)
+    assert agrupamento_medio(g) == pytest.approx(1.0)
+    assert transitividade(g) == pytest.approx(1.0)
+
+
 # -------------------------------------------------------------
 # Teste de Corretude Oficial: Zachary's Karate Club
 # -------------------------------------------------------------
