@@ -17,8 +17,9 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{intermediacao} ($k$ fontes) & \codigo{metricas/centralidade.py} & $O(km)$~\cite{brandes2007} & \feito \\
 \codigo{pagerank} & \codigo{metricas/centralidade.py} & $O(m)$ por iteração~\cite{brin1998} & \feito \\
 \codigo{numero\_de\_nucleo}, \codigo{k\_nucleo} & \codigo{metricas/nucleo\_k.py} & $O(m)$~\cite{batagelj2003} & \feito \\
-\codigo{medir.py} (tempo, memória, TEPS) & \codigo{desempenho/} & --- & \afazer \\
-\codigo{comparar\_networkx.py} & \codigo{desempenho/} & --- & \afazer \\
+\codigo{medir.py} (tempo, memória, TEPS) & \codigo{desempenho/} & --- & \feito \\
+\codigo{comparar\_networkx.py} & \codigo{desempenho/} & --- & \feito \\
+\codigo{graficos.py} (gráficos log-log) & \codigo{desempenho/} & --- & \feito \\
 \bottomrule
 \end{tabularx}}
 
@@ -28,6 +29,9 @@ Função & Arquivo & Complexidade & Situação \\
   \item No PageRank, nós sem saída repartem o valor entre todos os nós, e a aresta é escolhida em proporção ao peso.
   \item Se o PageRank não converge em \codigo{max\_iteracoes} (acontece em grafos bipartidos, como a estrela, com a tolerância $10^{-8}$), a função emite um aviso e devolve a última iteração, com erro da ordem de $0{,}85^{100} \approx 10^{-7}$, em vez de lançar exceção.
   \item No k-core, laços são ignorados; no direcionado, o grau é entrada + saída, como no NetworkX.
+  \item Nas medições, a intermediação exata só roda até 5.000 nós: ela custa $O(nm)$ e, com 5.000 nós, já leva cerca de 20~s por execução. Acima disso, só a versão amostrada, com $k = 100$ origens.
+  \item O tempo é a mediana de 5 execuções, com o coletor de lixo desligado durante a medição (como faz o \codigo{timeit}). O pico de memória é medido numa execução à parte, porque o \codigo{tracemalloc} deixa o código mais lento.
+  \item O NetworkX recebe os mesmos grafos, copiados para um \codigo{networkx.Graph} (a cópia não entra no tempo). No PageRank, usamos a versão em Python puro do NetworkX (\codigo{\_pagerank\_python}), porque o \codigo{nx.pagerank} padrão exige o SciPy, que não está nas dependências; assim, a comparação é entre Python puro e Python puro.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -39,31 +43,88 @@ Teste & Base & Obtido & Referência \\
 Betweenness normalizada dos nós 0, 33 e 32 & Karate & 0,4376; 0,3041; 0,1452 & 0,4376; 0,3041; 0,1452 \\
 PageRank ($d = 0{,}85$) dos nós 33, 0 e 32; soma & Karate & 0,1009; 0,097; 0,0717; 1 & 0,1009; 0,097; 0,0717; 1 \\
 Núcleo máximo & Karate & 4 (os mesmos 10 nós) & 4 (nós 0, 1, 2, 3, 7, 8, 13, 30, 32, 33) \\
-Betweenness e PageRank máximos & Twitch PT & \falta & nó 127 (0,0993 e 0,0119) \\
-Núcleo máximo & Twitch PT & \falta & 37, com 154 nós \\
+Betweenness e PageRank máximos & Twitch PT & nó 127 (0,0993 e 0,0119) & nó 127 (0,0993 e 0,0119) \\
+Núcleo máximo & Twitch PT & 37, com 154 nós & 37, com 154 nós \\
 Centro da estrela; grafo completo & sintético & $(n-1)(n-2)/2$; 0 & $(n-1)(n-2)/2$; 0 \\
+Maior diferença para o NetworkX, nó a nó & os 25 grafos medidos & $5{,}6 \cdot 10^{-17}$ & 0 \\
 \bottomrule
 \end{tabularx}}
 
 \subsection{Desempenho}
 \begin{itemize}[leftmargin=*]
-  \item Ambiente: \pendente{CPU, RAM, sistema, versão do Python e do NetworkX}
+  \item Ambiente: AMD Ryzen 5 7600X (6 núcleos, 12 threads), 14,7~GiB de RAM, Ubuntu 24.04 (Linux 7.0), Python 3.12.3 e NetworkX 3.7~\cite{hagberg2008}. O registro fica em \codigo{desempenho/resultados/ambiente.txt}.
   \item Metodologia: mediana de 5 execuções com \codigo{time.perf\_counter}; pico de memória com
-        \codigo{tracemalloc}; grafos ER, BA e WS de $10^3$ a $10^5$ nós e as 4 bases.
-  \item Resultados: \pendente{tabela nosso código vs. NetworkX; inclinação do log-log}
+        \codigo{tracemalloc}; grafos ER, BA e WS ($p = 0{,}1$) de $10^3$ a $10^5$ nós, com grau médio 10 e semente 42, e as 4 bases. O TEPS da BFS é o número de arestas da componente percorrida dividido pelo tempo (a métrica do Graph500).
+  \item Os resultados completos estão em \codigo{desempenho/resultados/}: \codigo{medicoes\_redes.csv}, \codigo{medicoes\_networkx.csv} e \codigo{inclinacoes.csv}. Para gerar de novo, da raiz do projeto:\\
+        \codigo{python -m desempenho.medir}\\
+        \codigo{python -m desempenho.comparar\_networkx}\\
+        \codigo{python -m desempenho.graficos}
+\end{itemize}
+
+\paragraph{Nosso código e NetworkX na Twitch PT.} A razão é o tempo do NetworkX dividido pelo
+nosso: acima de 1, o nosso é mais rápido.
+
+{\small\begin{tabularx}{\linewidth}{@{}Y r r r@{}}
+\toprule
+Algoritmo (Twitch PT, $n = 1.912$, $m = 31.299$) & Nosso & NetworkX & Razão \\
+\midrule
+BFS (uma origem) & 2,0 ms & 1,7 ms & 0,9$\times$ \\
+Intermediação exata & 6,96 s & 11,69 s & 1,7$\times$ \\
+Intermediação ($k = 100$) & 364 ms & 611 ms & 1,7$\times$ \\
+PageRank & 51,5 ms & 351 ms & 6,8$\times$ \\
+k-core & 8,1 ms & 21,9 ms & 2,7$\times$ \\
+\bottomrule
+\end{tabularx}}
+
+\paragraph{Inclinação no log-log.} Expoente $b$ do ajuste $\text{tempo} \approx a\,(n + m)^b$ nos
+grafos sintéticos. Como neles $m \approx 5n$, o $O(nm)$ da intermediação exata cresce como
+$(n + m)^2$.
+
+{\small\begin{tabularx}{\linewidth}{@{}Y L{4.4cm} r r@{}}
+\toprule
+Algoritmo & Esperada & Nosso & NetworkX \\
+\midrule
+BFS & 1 ($O(n + m)$) & 1,26 & 1,26 \\
+Intermediação exata & 2 ($O(nm)$) & 2,04 & 2,11 \\
+Intermediação ($k = 100$) & 1 ($O(km)$) & 1,19 & 1,24 \\
+PageRank & 1 ($O(n + m)$ por iteração) & 1,03 & 0,99 \\
+k-core & 1 ($O(n + m)$) & 1,16 & 1,19 \\
+\bottomrule
+\end{tabularx}}
+
+\begin{itemize}[leftmargin=*]
+  \item As inclinações confirmam as complexidades: perto de 2 na intermediação exata e perto de 1 nos outros. Na BFS, na intermediação amostrada e no k-core, o expoente fica um pouco acima de 1 (1,16 a 1,26), provavelmente porque os grafos maiores já não cabem na memória cache: o TEPS da BFS cai de cerca de 16 milhões de arestas por segundo, com $10^3$ nós, para cerca de 4 milhões, com $10^5$.
+  \item O nosso código é mais rápido que o NetworkX na intermediação (1,7 a 2,7 vezes), no k-core (1,1 a 2,7 vezes) e, principalmente, no PageRank (6 a 9 vezes, com cerca de 5 vezes menos memória: 114~MiB contra 606~MiB no BA com $10^5$ nós). O NetworkX monta uma cópia do grafo para o PageRank e percorre dicionários; o nosso percorre listas indexadas de $0$ a $n - 1$. Na BFS, os dois empatam (0,7 a 1,0 vez).
+  \item A memória cresce linearmente em todos os algoritmos (inclinação entre 0,92 e 1,08), o que confirma o espaço $O(n + m)$.
+  \item Com $10^5$ nós, a intermediação amostrada leva cerca de 20~s; a exata levaria horas.
 \end{itemize}
 
 \subsection{Figuras e tabelas para o relatório}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{gráfico log-log de tempo $\times$ $(n+m)$, com retas $O(n+m)$ e $O(nm)$}
+  \item Figura~\ref{fig:iago-tempo}: tempo $\times$ $(n + m)$ em log-log, com as retas $O(n + m)$ e $O(nm)$.
+  \item Em \codigo{desempenho/resultados/figuras/}, em PNG (slides) e PDF (relatório): \codigo{tempo\_loglog}, \codigo{memoria\_loglog}, \codigo{razao\_networkx} (nosso contra NetworkX nas bases) e \codigo{teps\_bfs}.
 \end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{iago_tempo_loglog.png}
+\caption{Tempo (mediana de 5 execuções) $\times$ $(n + m)$, em log-log. Azul: nosso código;
+laranja: NetworkX 3.7. Linhas: grafos sintéticos ER, BA e WS; losangos: as 4 bases; tracejado:
+a complexidade teórica, deslocada para baixo.}
+\label{fig:iago-tempo}
+\end{figure}
 
 \subsection{Limitações e pendências}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: betweenness exata inviável em grafos grandes; usar amostragem~\cite{brandes2007}}
+  \item A intermediação exata é inviável em grafos grandes em Python puro: com $10^5$ nós, ela levaria horas. Nesses casos, usamos a amostragem de $k$ origens~\cite{brandes2007}, que é uma estimativa sem viés.
+  \item Os tempos são de uma única máquina e de uma única versão do Python; em outro computador os valores mudam, mas as inclinações e as razões devem se manter.
+  \item O \codigo{tracemalloc} só conta a memória alocada pelo Python durante a chamada: o grafo de entrada, que já existia, fica de fora.
+  \item O PageRank do NetworkX foi medido na versão em Python puro; a versão com SciPy seria mais rápida.
 \end{itemize}
 
 \subsection{Registro}
 \begin{description}[leftmargin=2.6cm,style=nextline]
   \registro{2026-11-13}{Diagrama de sequência da Etapa 1 e intermediação de Brandes (exata e por $k$ origens), PageRank e k-core, com testes.}
+  \registro{2026-11-15}{PRs \#12 (diagrama de sequência), \#13 (PageRank e k-core) e \#14 (Brandes) aprovados e na \codigo{main}.}
+  \registro{2026-11-18}{Medições de desempenho e comparação com o NetworkX em \codigo{desempenho/}, com os resultados e os gráficos; testes com os valores de referência da Twitch PT.}
 \end{description}

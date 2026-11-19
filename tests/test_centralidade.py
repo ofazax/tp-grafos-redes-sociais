@@ -6,10 +6,15 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from redes.leitores import RAIZ, carregar_twitch_ptbr
 from redes.metricas.centralidade import intermediacao, pagerank
 from redes.nucleo import Grafo
 
 ARQUIVO_KARATE = Path(__file__).parent / "dados" / "karate_arestas.txt"
+TWITCH = "dados/brutos/twitch/PTBR/musae_PTBR_edges.csv"
+
+# A Twitch PT não vai para o Git (dados/brutos/): os testes dela pulam se a base não foi baixada.
+precisa_twitch = pytest.mark.skipif(not (RAIZ / TWITCH).exists(), reason=f"baixe {TWITCH} (veja dados/README.md)")
 
 
 def carregar_karate():
@@ -269,3 +274,22 @@ def test_pagerank_invariantes(arestas, direcionado):
         n = g.numero_de_nos()
         assert sum(pr.values()) == pytest.approx(1.0)
         assert all(valor >= 0.15 / n - 1e-9 for valor in pr.values())
+
+
+# Twitch PT: valores de referência do guia (NetworkX 3.7)
+# A intermediação exata faz uma BFS a partir de cada um dos 1.912 nós: leva alguns segundos.
+
+
+@precisa_twitch
+def test_twitch_intermediacao_maxima_no_127():
+    b = intermediacao(carregar_twitch_ptbr()[0])
+    assert max(b, key=b.get) == 127
+    assert b[127] == pytest.approx(0.0993, abs=1e-4)
+
+
+@precisa_twitch
+def test_twitch_pagerank_maximo_no_127():
+    pr = pagerank(carregar_twitch_ptbr()[0])
+    assert max(pr, key=pr.get) == 127
+    assert pr[127] == pytest.approx(0.0119, abs=1e-4)
+    assert sum(pr.values()) == pytest.approx(1.0)
