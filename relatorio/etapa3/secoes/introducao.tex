@@ -1,0 +1,43 @@
+% =====================================================================
+% Introdução --- Brunno (Frente 1)
+% Só o Brunno edita este arquivo.
+% =====================================================================
+\section{Introdução}\label{sec:introducao}
+
+Uma rede social pode ser descrita como um grafo: as pessoas são os nós e as relações entre elas,
+como amizades ou interações, são as arestas. Com essa representação, perguntas sobre a rede viram
+perguntas sobre o grafo. Quem ocupa uma posição central? Que grupos se formam? Quantos passos
+separam duas pessoas? Até onde chega uma informação que começa em alguém? A análise de redes
+sociais responde a essas perguntas com medidas de grau, caminhos, centralidade, agrupamento e
+comunidades~\cite{wasserman1994,newman2018,barabasi2016}. As respostas têm uso prático. Uma
+campanha que quer se espalhar depressa procura quem alcança mais gente, e quem tenta conter um
+boato precisa saber por onde ele passa.
+
+Encontrar esses espalhadores não é trivial. A escolha mais intuitiva é o grau, ou seja, quem tem
+mais amigos. Mas um nó de grau alto na periferia da rede, ligado a nós pouco conectados, espalha
+menos que um nó do miolo denso, e simulações de epidemias mostraram que a decomposição em núcleos
+($k$-core) acha os melhores espalhadores com mais acerto que o grau~\cite{kitsak2010}. Esses
+estudos medem o acerto com o próprio modelo de espalhamento. A rede de streamers da Twitch que
+transmitem em português~\cite{rozemberczki2021} permite ir além, porque cada canal traz o número
+real de visualizações, uma medida de audiência que não vem do grafo.
+
+Este trabalho desenvolve uma ferramenta que constrói, analisa e visualiza redes sociais e a
+aplica a esse problema: identificar os influenciadores da Twitch PT e descobrir qual centralidade
+os encontra melhor (Seção~\ref{sec:problema}). Toda a ferramenta foi escrita em Python puro, porque
+o enunciado proíbe bibliotecas prontas de grafos, como o NetworkX~\cite{hagberg2008}, que só
+aparece na comparação de desempenho. Ela lê quatro redes reais e gera grafos sintéticos; calcula
+grau, caminhos mínimos, distâncias, componentes e as centralidades de proximidade, harmônica,
+intermediação, PageRank e número de núcleo; mede o agrupamento e detecta comunidades pelos métodos
+de Louvain e de propagação de rótulos; simula espalhamentos SIR para comparar o ranking de cada
+centralidade com o alcance simulado e com as visualizações reais; e mostra tudo numa interface web,
+com o desenho da rede. Cada função tem testes automáticos que comparam o resultado com valores
+conhecidos, e o desempenho foi medido em grafos de até 100.000 nós.
+
+O relatório segue esta ordem: trabalhos relacionados (Seção~\ref{sec:trabalhos}), definição do
+problema (Seção~\ref{sec:problema}), bases de dados (Seção~\ref{sec:bases}) e modelagem do grafo
+(Seção~\ref{sec:modelagem}); os algoritmos e o que eles revelam nas redes
+(Seções~\ref{sec:caminhos} a~\ref{sec:comunidades}); a resposta ao problema
+(Seção~\ref{sec:influenciadores}); a interface (Seção~\ref{sec:interface}); a avaliação de
+desempenho (Seção~\ref{sec:desempenho}); as limitações e os cuidados éticos
+(Seção~\ref{sec:limitacoes}); a conclusão (Seção~\ref{sec:conclusao}); e o que cada integrante fez
+(Seção~\ref{sec:responsabilidades}).

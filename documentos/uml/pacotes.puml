@@ -1,5 +1,5 @@
 @startuml pacotes
-' Diagrama de pacotes: como os módulos do TP dependem uns dos outros (Frente 1, Etapa 1).
+' Diagrama de pacotes: como os módulos do TP dependem uns dos outros (Frente 1).
 ' O detalhe da classe Grafo está em classes.puml.
 ' Para gerar a imagem: extensão PlantUML do VS Code (Alt+D) ou
 '   java -jar plantuml.jar -tpng documentos/uml/pacotes.puml
@@ -13,16 +13,16 @@ skinparam nodesep 30
 hide empty members
 hide circle
 
-package "interface (Streamlit + Plotly)" as interface {
-  class "app.py e telas" as telas <<módulo>>
+package "interface (Streamlit + página web)" as interface {
+  class "app.py, telas\nservico_backend" as telas <<módulos>>
 }
 
 package "redes" as redes {
   package "aplicacao" as aplicacao {
-    class "simular_sir\npoder_de_espalhamento\ncomparar_rankings" as f_aplicacao <<funções>>
+    class "limiar_epidemico\nsimular_sir\npoder_de_espalhamento\ncomparar_rankings" as f_aplicacao <<funções>>
   }
   package "comunidades" as comunidades {
-    class "modularidade\nlouvain\npropagacao_de_rotulos\nnmi, ari" as f_comunidades <<funções>>
+    class "modularidade, louvain\npropagacao_de_rotulos\nnmi, ari" as f_comunidades <<funções>>
   }
   package "visualizacao" as visualizacao {
     class "fruchterman_reingold" as f_visualizacao <<função>>
@@ -43,7 +43,7 @@ package "redes" as redes {
 }
 
 package "desempenho" as desempenho {
-  class "medir\ncomparar_networkx" as f_desempenho <<módulos>>
+  class "medir, casos, graficos\ncomparar_networkx" as f_desempenho <<módulos>>
 }
 
 interface .down.> redes : chama as funções
