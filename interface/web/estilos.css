@@ -1,0 +1,121 @@
+:root {
+  --c-offwhite: #FCFFF5;
+  --c-sage: #D1DBBD;
+  --c-sagelight: #EEF3E2;
+  --c-sagesoft: #E4ECD0;
+  --c-mutedgreen: #91AA9D;
+  --c-petrol: #3E606F;
+  --c-deepnavy: #193441;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--c-offwhite);
+  color: var(--c-deepnavy);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FCFFF5;
+}
+::-webkit-scrollbar-thumb {
+  background: #91AA9D;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3E606F;
+}
+
+.nav-item {
+  border-left: 4px solid transparent;
+}
+.nav-item.active {
+  background-color: #3E606F;
+  color: #FCFFF5;
+  border-left: 4px solid #D1DBBD;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 0 rgba(252, 255, 245, 0.1);
+}
+
+.btn-primary {
+  background-color: #3E606F;
+  color: #FCFFF5;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(25, 52, 65, 0.18);
+}
+.btn-primary:hover {
+  background-color: #193441;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(25, 52, 65, 0.22);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: #D1DBBD;
+  color: #193441;
+  transition: all 0.18s ease;
+}
+.btn-secondary:hover {
+  background-color: #91AA9D;
+  color: #FCFFF5;
+}
+
+button:disabled,
+.btn-loading {
+  opacity: 0.72;
+  cursor: not-allowed !important;
+  transform: none !important;
+  pointer-events: none;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  display: inline-block;
+  animation: btn-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+.metric-tab.active {
+  background-color: #193441;
+  color: #FCFFF5;
+  border-color: #193441;
+  box-shadow: 0 2px 6px rgba(25, 52, 65, 0.2);
+}
+
+input[type="range"] {
+  accent-color: #3E606F;
+}
+
+.canvas-bg {
+  background-color: #FCFFF5;
+  background-image: radial-gradient(#D1DBBD 1.35px, transparent 1.35px);
+  background-size: 24px 24px;
+}
+
+.map-canvas {
+  cursor: grab;
+  touch-action: none;
+}
+.map-canvas:active {
+  cursor: grabbing;
+}
