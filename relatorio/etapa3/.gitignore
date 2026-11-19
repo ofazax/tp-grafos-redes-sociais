@@ -1,0 +1,11 @@
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+# Só o PDF compilado fica fora do Git; as figuras em PDF entram.
+/etapa3.pdf
