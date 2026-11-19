@@ -1,22 +1,131 @@
 % =====================================================================
 % Descrição formal do problema aplicado --- Ravi (Frente 5)
-% Só o Ravi edita este arquivo. Apague os \pendente ao escrever.
+% Só o Ravi edita este arquivo.
 % =====================================================================
 \section{Problema aplicado}\label{sec:problema}
 
-\pendente{Ravi: descrição formal do problema, com quatro partes.}
+Em uma rede social, a informação não se espalha por igual: poucos nós conseguem fazer uma mensagem
+chegar a boa parte da rede. Saber quais são esses nós serve a quem quer acelerar uma difusão, como
+uma campanha ou um lançamento, e a quem quer contê-la, como no caso de um boato. Na prática, eles são
+escolhidos por medidas de centralidade, e a escolha mais intuitiva é o grau: quem tem mais amigos
+alcançaria mais gente. Essa intuição falha quando um nó de grau alto fica na periferia da rede,
+ligado a nós pouco conectados entre si. Nesse caso, a difusão que começa nele se esgota cedo.
+Simulações de epidemias em várias redes reais mostraram que a posição do nó na decomposição em
+núcleos ($k$-core) identifica os espalhadores mais eficientes melhor que o grau e a
+intermediação~\cite{kitsak2010}. Nesse tipo de estudo, porém, o alcance que serve de referência vem
+do próprio modelo de difusão. A rede de streamers que transmitem em português na
+Twitch~\cite{rozemberczki2021} permite ir além. Cada streamer traz o número real de visualizações do
+canal, um indicador de influência medido fora do grafo. Assim, as centralidades podem ser testadas
+contra o modelo e também contra um dado observado.
 
-\paragraph{Pergunta.} \pendente{Quais streamers são os influenciadores da rede da Twitch em
-português, e qual medida de centralidade os encontra melhor? Citar a pergunta de
-\cite{kitsak2010}: o k-core prevê os espalhadores melhor que o grau?}
+\paragraph{Pergunta.} Quais streamers são os influenciadores da Twitch PT, e qual centralidade os
+encontra melhor? Comparamos seis centralidades (Tabela~\ref{tab:centralidades}) para responder a
+duas perguntas:
+\begin{itemize}
+  \item \textbf{P1:} qual delas melhor ordena os streamers pelo alcance de um espalhamento simulado
+        que começa em cada um?
+  \item \textbf{P2:} qual delas melhor ordena os streamers pelas visualizações reais?
+\end{itemize}
+A P1 repete, numa rede nova, a comparação entre o número de núcleo e o grau feita
+em~\cite{kitsak2010}. A P2 verifica se a vantagem prevista pelo modelo aparece também num indicador
+real de audiência. Temos duas hipóteses:
+\begin{itemize}
+  \item \textbf{H1:} o número de núcleo supera o grau na P1;
+  \item \textbf{H2:} todas as centralidades concordam com as visualizações, mas menos do que com o
+        alcance, porque a audiência também depende de fatores que o grafo não registra, como a
+        idade do canal e a frequência das transmissões.
+\end{itemize}
 
-\paragraph{Entrada.} \pendente{O grafo da Twitch PT (Seção~\ref{sec:bases}) e os atributos de cada
-streamer (visualizações, parceiro).}
+\paragraph{Entrada.} A Twitch PT (Seção~\ref{sec:bases}) é um grafo simples,
+não direcionado e sem peso, $G = (V, E, w, p)$, em que $V$ são os $n = 1.912$ streamers e $E$ as
+$m = 31.299$ amizades mútuas. O grafo é conexo. Os atributos são $w \colon V \to \mathbb{N}_0$, as
+visualizações acumuladas do canal, e $p \colon V \to \{0, 1\}$, que indica se o canal é parceiro da
+Twitch. Sejam $N(v)$ os vizinhos de $v$, $k_v = |N(v)|$ o grau e $d(u, v)$ a distância em arestas.
+Os graus são muito desiguais: $\langle k \rangle \approx 32{,}7$,
+$\langle k^2 \rangle \approx 4.190$ e $k_{\max} = 767$.
 
-\paragraph{Saída.} \pendente{Um ranking dos streamers para cada centralidade (grau, proximidade,
-harmônica, intermediação, PageRank e k-core) e o $\tau$ de Kendall de cada ranking contra a
-referência.}
+\paragraph{Centralidades.} A Tabela~\ref{tab:centralidades} define as seis funções
+$c \colon V \to \mathbb{R}$ comparadas, todas calculadas só com $(V, E)$. Cada uma ordena os nós do
+maior para o menor valor, e nós com o mesmo valor ficam empatados.
 
-\paragraph{Como validar.} \pendente{Simulação SIR a partir de cada nó (alcance médio), com $\beta$
-um pouco acima do limiar epidêmico (0,0079); comparação de cada ranking com o alcance e com as
-visualizações reais pelo $\tau$ de Kendall~\cite{kendall1938}.}
+\begin{table}[htbp]
+\centering
+\caption{Centralidades comparadas. $\sigma_{st}$ é o número de caminhos mínimos entre $s$ e $t$,
+$\sigma_{st}(v)$ quantos passam por $v$, $V_k$ os nós do $k$-núcleo, o maior subgrafo induzido
+com grau mínimo $k$, e $\alpha = 0{,}85$. O custo do PageRank é por iteração.}
+\label{tab:centralidades}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}l >{$\displaystyle}l<{$} l Y@{}}
+\toprule
+Medida & \text{Definição de } c(v) & Custo & Referência \\
+\midrule
+Grau $C_D$ & \frac{k_v}{n-1} & $O(n)$ & --- \\[8pt]
+Proximidade $C_C$ & \frac{n-1}{\sum_{u \neq v} d(v, u)} & $O(n(n+m))$
+  & \cite{bavelas1950}\newline\cite{sabidussi1966} \\[8pt]
+Harmônica $C_H$ & \sum_{u \neq v} \frac{1}{d(v, u)} & $O(n(n+m))$ & \cite{boldi2014} \\[8pt]
+Intermediação $C_B$ & \tfrac{2}{(n-1)(n-2)} \sum_{s < t;\, s, t \neq v} \frac{\sigma_{st}(v)}{\sigma_{st}}
+  & $O(nm)$ & \cite{brandes2001} \\[8pt]
+PageRank $\mathit{PR}$ & \tfrac{1-\alpha}{n} + \alpha \sum_{u \in N(v)} \tfrac{\mathit{PR}(u)}{k_u}
+  & $O(n+m)$ & \cite{brin1998} \\[8pt]
+Núcleo $k_s$ & \max\{k : v \in V_k\} & $O(n+m)$ & \cite{batagelj2003} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Referências de validação.} Os rankings são comparados com as visualizações $w$ e com o
+alcance $\rho(v)$, estimado por uma simulação SIR em tempo discreto. A simulação começa com só $v$
+infectado. A cada passo, cada infectado transmite para cada vizinho suscetível com probabilidade
+$\beta$ e se recupera no passo seguinte ($\gamma = 1$). Ela termina quando não sobra infectado.
+Repetindo $M$ vezes, com $\mathcal{R}^{(r)}(v)$ os recuperados da rodada $r$,
+\[
+  \rho(v) = \frac{1}{Mn} \sum_{r=1}^{M} \bigl|\mathcal{R}^{(r)}(v)\bigr|.
+\]
+Com $\gamma = 1$, o limiar epidêmico, aproximado para redes sem correlação de grau, é
+$\beta_c = \langle k \rangle / (\langle k^2 \rangle - \langle k \rangle) \approx 0{,}0079$
+\cite{newman2002}. Abaixo dele o espalhamento morre logo, e muito acima quase toda a rede é atingida.
+Nos dois casos, todos os nós têm alcance parecido e o ranking não diz nada. Por isso, $\beta$ fica
+pouco acima do limiar, como em~\cite{kitsak2010}. Os valores iniciais são
+$\beta = 0{,}012 \approx 1{,}5\,\beta_c$ e $M = 100$, e serão ajustados nos experimentos. A semente
+do sorteio é fixa, para que os resultados possam ser repetidos. No pior caso, o custo é
+$O(M n (n + m))$.
+
+\paragraph{Saída.} Para cada centralidade $c$, a ferramenta produz três resultados:
+\begin{itemize}
+  \item o ranking dos 1.912 streamers por $c$, do qual a interface mostra os $k$ primeiros (dez, por
+        padrão). Os empates
+        são desfeitos pelo grau e depois pelo identificador; no próprio grau, vai-se direto ao
+        identificador. Isso importa no caso de $k_s$, em que 154 nós dividem o valor máximo;
+  \item a concordância desse ranking com o alcance, $\tau_b(c, \rho)$;
+  \item a concordância desse ranking com as visualizações, $\tau_b(c, w)$.
+\end{itemize}
+A concordância é medida pelo $\tau$ de Kendall~\cite{kendall1938}, na variante $\tau_b$, que trata os
+empates~\cite{kendall1945}:
+\[
+  \tau_b(c, Y) = \frac{P - Q}{\sqrt{(P + Q + T_c)(P + Q + T_Y)}}, \qquad Y \in \{\rho, w\},
+\]
+em que, entre os $\binom{n}{2}$ pares de nós, $P$ e $Q$ contam os pares concordantes e
+discordantes, e $T_c$ e $T_Y$ os empatados só em $c$ ou só em $Y$. O $\tau_b$ só olha a ordem, o que
+permite comparar medidas em escalas diferentes. Ele também desconta os empates, o que é essencial
+aqui: o grau assume só 187 valores distintos e $k_s$ só 37, e o $\tau$ simples os prejudicaria. As respostas são
+$c^*_\rho = \arg\max_c \tau_b(c, \rho)$ para a P1 e $c^*_w = \arg\max_c \tau_b(c, w)$ para a P2, e as
+hipóteses ficam \textbf{H1}: $\tau_b(k_s, \rho) > \tau_b(C_D, \rho)$ e \textbf{H2}:
+$0 < \tau_b(c, w) < \tau_b(c, \rho)$ para toda $c$.
+
+\paragraph{Restrições e limitações.} Tudo é implementado em Python puro, só com a biblioteca
+padrão. O NetworkX não é importado pela ferramenta: ele serviu para obter os valores de referência
+das centralidades no Karate Club, que os testes automáticos conferem, e vai servir para comparar o
+desempenho. A simulação e o $\tau_b$ serão testados em casos-limite:
+\begin{itemize}
+  \item com $\beta = 0$, só o nó inicial é atingido;
+  \item com $\beta = 1$, o grafo conexo é atingido por inteiro;
+  \item rankings iguais dão $\tau_b = 1$, e rankings invertidos dão $\tau_b = -1$.
+\end{itemize}
+Com $n = 1.912$, todas as medidas cabem na versão exata. As limitações são:
+\begin{itemize}
+  \item a amizade mútua é só um indicador indireto de influência;
+  \item as visualizações se acumulam com a idade do canal, por isso servem de validação, e não de
+        gabarito;
+  \item a base é um retrato estático;
+  \item o SIR é um modelo simplificado, e o limiar, uma aproximação.
+\end{itemize}
