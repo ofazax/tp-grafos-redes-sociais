@@ -1,6 +1,7 @@
-"""Testes do limiar epidêmico e da simulação SIR: casos de resposta conhecida, valores
-esperados calculados à mão, Karate Club, invariantes e Twitch PT."""
+"""Testes do limiar epidêmico, da simulação SIR e da tabela de alcance: casos de resposta
+conhecida, valores esperados calculados à mão, Karate Club, invariantes e Twitch PT."""
 
+import csv
 import math
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from redes.aplicacao.experimento import COLUNAS, salvar_csv, tabela_de_alcance
 from redes.aplicacao.influencia import limiar_epidemico, poder_de_espalhamento, simular_sir
 from redes.leitores import RAIZ, carregar_twitch_ptbr
 from redes.metricas.caminhos import componentes_conexas
@@ -268,6 +270,60 @@ def test_atingidos_ficam_na_componente_da_origem(g, beta, semente):
     assert atingidos <= componente[0]
 
 
+# Tabela de alcance (experimento.py)
+
+
+def test_tabela_ordenada_pelo_alcance():
+    # Com beta = 1, cada nó atinge a própria componente: os 3 nós do triângulo vêm antes
+    # dos 2 da aresta solta, e o nó isolado fica por último.
+    g = Grafo.de_arestas([(0, 1), (1, 2), (2, 0), (3, 4)])
+    g.adicionar_no(5)
+    linhas = tabela_de_alcance(g, {}, beta=1.0, rodadas=2, semente=1)
+    assert [linha["no"] for linha in linhas] == [0, 1, 2, 3, 4, 5]
+    assert [linha["posicao"] for linha in linhas] == [1, 2, 3, 4, 5, 6]
+    assert linhas[0]["alcance"] == pytest.approx(3 / 6)
+    assert linhas[0]["atingidos_medios"] == pytest.approx(3)
+    assert linhas[-1]["alcance"] == pytest.approx(1 / 6)
+
+
+def test_tabela_desempata_pelo_grau_e_depois_pelo_no():
+    # Com beta = 0, todos têm alcance 1/n: vale o grau (centro 0 primeiro) e depois o nó,
+    # em ordem numérica (2 antes de 10).
+    g = Grafo.de_arestas([(0, 10), (0, 2), (0, 1)])
+    linhas = tabela_de_alcance(g, {}, beta=0.0, rodadas=1, semente=1)
+    assert [linha["no"] for linha in linhas] == [0, 1, 2, 10]
+
+
+def test_tabela_traz_grau_nucleo_e_atributos():
+    g = completo(4)
+    g.adicionar_aresta(3, 4)
+    atributos = {0: {"visualizacoes": 100, "parceiro": True}}
+    linhas = {linha["no"]: linha for linha in tabela_de_alcance(g, atributos, beta=0.5, rodadas=5, semente=1)}
+    assert linhas[0]["grau"] == 3 and linhas[0]["nucleo"] == 3
+    assert linhas[4]["grau"] == 1 and linhas[4]["nucleo"] == 1
+    assert linhas[0]["visualizacoes"] == 100 and linhas[0]["parceiro"] is True
+    assert linhas[4]["visualizacoes"] == "" and linhas[4]["parceiro"] == ""
+
+
+def test_tabela_usa_o_mesmo_alcance_do_poder_de_espalhamento():
+    g = carregar_karate()
+    linhas = tabela_de_alcance(g, {}, beta=0.2, rodadas=20, semente=5)
+    rho = poder_de_espalhamento(g, 0.2, rodadas=20, semente=5)
+    assert {linha["no"]: linha["alcance"] for linha in linhas} == rho
+
+
+def test_salvar_csv(tmp_path):
+    g = estrela(4)
+    linhas = tabela_de_alcance(g, {0: {"visualizacoes": 7, "parceiro": False}}, beta=1.0, rodadas=1, semente=1)
+    caminho = tmp_path / "sub" / "alcance.csv"
+    salvar_csv(linhas, caminho)
+    with open(caminho, encoding="utf-8", newline="") as arquivo:
+        lidas = list(csv.DictReader(arquivo))
+    assert list(lidas[0]) == COLUNAS
+    assert len(lidas) == 4
+    assert lidas[0]["no"] == "0" and lidas[0]["alcance"] == "1.000000" and lidas[0]["visualizacoes"] == "7"
+
+
 # Twitch PT: valor da descrição do problema (Etapa 1)
 
 
@@ -285,3 +341,13 @@ def test_twitch_hub_espalha_mais_que_folha():
     g, _ = carregar_twitch_ptbr()
     rho = poder_de_espalhamento(g, beta=0.012, rodadas=200, semente=1, origens=[127, 13])
     assert rho[127] > rho[13]
+
+
+@precisa_twitch
+def test_twitch_tabela_de_alcance():
+    # Uma rodada por nó, só para conferir a tabela inteira (a de 100 rodadas leva ~20 s).
+    g, atributos = carregar_twitch_ptbr()
+    linhas = tabela_de_alcance(g, atributos, beta=0.012, rodadas=1, semente=1)
+    assert len(linhas) == 1912
+    assert all(linha["visualizacoes"] != "" for linha in linhas)
+    assert max(linha["nucleo"] for linha in linhas) == 37

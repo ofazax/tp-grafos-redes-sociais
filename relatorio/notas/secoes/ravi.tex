@@ -16,6 +16,7 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{limiar\_epidemico} & \codigo{aplicacao/influencia.py} & $O(n)$~\cite{newman2002} & \feito \\
 \codigo{simular\_sir} (uma rodada) & \codigo{aplicacao/influencia.py} & $O(n + m)$ no pior caso, com $\gamma = 1$ & \feito \\
 \codigo{poder\_de\_espalhamento} & \codigo{aplicacao/influencia.py} & $O(M \cdot n \cdot (n + m))$ no pior caso~\cite{kitsak2010} & \feito \\
+\codigo{tabela\_de\_alcance} (Twitch PT) & \codigo{aplicacao/experimento.py} & o do anterior $+ O(n \log n)$ & \feito \\
 \codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n^2)$ ingênuo~\cite{kendall1938} & \afazer \\
 \codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & --- & \afazer \\
 \bottomrule
@@ -60,6 +61,29 @@ $\tau$ entre PageRank / k-core e visualizações & Twitch PT & \falta & $\approx
 \end{tabularx}}
 
 \subsection{Resultados}
+Poder de espalhamento na Twitch PT (\codigo{python -m redes.aplicacao.experimento}; $\beta = 0{,}012$,
+$\gamma = 1$, 100 rodadas por nó, semente 2026, cerca de 20\,s). Os atingidos por rodada vão de 1
+(o surto morre na origem) a 88 (4,6\% da rede), com mediana 7,4. Os dez maiores alcances estão
+todos no núcleo mais interno ($k_s = 37$); o nó 36 (grau 276) entra no top 10, e nós de grau 454 e
+385 ficam de fora. A tabela completa está em \codigo{aplicacao/resultados/alcance\_twitch.csv}.
+
+{\small\begin{tabularx}{\linewidth}{@{}r r r r r Y@{}}
+\toprule
+\# & Nó & Alcance & Grau & Núcleo & Visualizações \\
+\midrule
+1 & 127 & 4,60\% & 767 & 37 & 32.672.093 \\
+2 & 467 & 4,53\% & 582 & 37 & 11.392.773 \\
+3 & 1297 & 4,21\% & 587 & 37 & 7.724.802 \\
+4 & 290 & 4,13\% & 590 & 37 & 116.392.808 \\
+5 & 1476 & 4,01\% & 598 & 37 & 18.475.754 \\
+6 & 1660 & 3,89\% & 475 & 37 & 33.101.623 \\
+7 & 1758 & 3,88\% & 394 & 37 & 4.397.521 \\
+8 & 1593 & 3,83\% & 368 & 37 & 3.094.236 \\
+9 & 1320 & 3,82\% & 416 & 37 & 40.659.090 \\
+10 & 36 & 3,69\% & 276 & 37 & 1.577.684 \\
+\bottomrule
+\end{tabularx}}
+
 \pendente{tabela com o $\tau$ de cada centralidade contra o alcance SIR e contra as visualizações;
 o k-core prevê os espalhadores melhor que o grau?}
 
@@ -72,4 +96,6 @@ o k-core prevê os espalhadores melhor que o grau?}
 \begin{description}[leftmargin=2.6cm,style=nextline]
   \registro{2026-11-19}{limiar epidêmico, SIR em tempo discreto e alcance médio por Monte Carlo
     em \codigo{aplicacao/influencia.py}, com 37 testes em \codigo{tests/test\_influencia.py}.}
+  \registro{2026-11-19}{poder de espalhamento na Twitch PT: \codigo{aplicacao/experimento.py} grava
+    o alcance de cada streamer em \codigo{aplicacao/resultados/alcance\_twitch.csv}; mais 6 testes.}
 \end{description}
