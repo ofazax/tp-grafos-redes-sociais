@@ -20,6 +20,8 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n \log n)$~\cite{kendall1945,knight1966,christensen2005} & \feito \\
 \codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & $O(c \cdot r \cdot n \log n)$ & \feito \\
 \codigo{tabela\_de\_concordancia} (Twitch PT) & \codigo{aplicacao/experimento.py} & $O(nm)$, pela intermediação & \feito \\
+\codigo{beta\_recomendado} ($1{,}5\,\beta_c$) & \codigo{aplicacao/influencia.py} & $O(n)$ & \feito \\
+\codigo{evolucao\_sir} (curvas S, I, R) & \codigo{aplicacao/influencia.py} & $O(M (n + m))$ no pior caso & \feito \\
 \bottomrule
 \end{tabularx}}
 
@@ -141,4 +143,11 @@ Número de núcleo & 0,7301 & 0,4034 \\
   \registro{2026-11-20}{$\tau_b$ de Kendall (Knight, $O(n \log n)$) e \codigo{comparar\_rankings};
     o experimento compara as 6 centralidades com o alcance e com as visualizações e grava
     \codigo{concordancia\_twitch.csv}; 58 testes no total.}
+  \registro{2026-11-21}{integração com a interface: a tela de influenciadores usa
+    \codigo{evolucao\_sir} (curvas e cores do mapa) e \codigo{poder\_de\_espalhamento} (alcance
+    do ranking), com $\gamma = 1$, 100 rodadas e $\beta = 1{,}5\,\beta_c$ da rede ativa (0,012 na
+    Twitch PT); a ``correlação de Pearson'' da tela, que tinha piso fixo (0,65) e valores fixos
+    sem dados, virou o $\tau_b$ do grau, do núcleo e do PageRank contra o alcance e, na Twitch,
+    contra as visualizações (com $\approx$ quando há amostra, em redes com mais de 2.000 nós);
+    o pedido com $\beta$ ou $\gamma$ inválido é recusado sem mudar a sessão; 66 testes.}
 \end{description}

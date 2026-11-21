@@ -1,7 +1,64 @@
 % =====================================================================
 % Influenciadores: resultados do problema aplicado --- Ravi (Frente 5)
-% Só o Ravi edita este arquivo. Apague o \pendente quando escrever a seção.
+% Só o Ravi edita este arquivo.
 % =====================================================================
 \section{Influenciadores na Twitch PT}\label{sec:influenciadores}
 
-\pendente{Ravi: limiar epidêmico, simulação SIR e $\tau$ de Kendall (complexidade e validação) e os resultados: tabela com o $\tau_b$ de cada centralidade contra o alcance e contra as visualizações, e a resposta às perguntas P1 e P2 e às hipóteses H1 e H2. Até 1 página.}
+As funções ficam em \codigo{aplicacao/influencia.py}, e \codigo{aplicacao/experimento.py} roda o
+experimento e grava os resultados em \codigo{aplicacao/resultados/}. A tela de influenciadores
+(Seção~\ref{sec:interface}) usa as mesmas funções e os mesmos parâmetros.
+
+\paragraph{Limiar e simulação.} A função \codigo{limiar\_epidemico} calcula $\beta_c$ a partir dos
+graus, em $O(n)$. A função \codigo{simular\_sir} faz uma rodada: a cada passo, cada infectado tenta
+transmitir uma vez para cada vizinho suscetível e se recupera. Os estados ficam num vetor de bytes
+que só é limpo nos nós atingidos, então cada rodada custa o tamanho do surto, e $O(n + m)$ no pior
+caso. A função \codigo{poder\_de\_espalhamento} repete a rodada $M = 100$ vezes a partir de cada
+nó, em $O(M n (n + m))$ no pior caso. Perto do limiar, quase todos os surtos são pequenos, e as
+191.200 rodadas levam cerca de 15\,s. Com $\beta = 0{,}012$ e semente 2026, os atingidos por rodada
+vão de 1 a 88 (4,6\% da rede), com mediana de 7,4.
+
+\paragraph{Concordância.} A função \codigo{tau\_de\_kendall} calcula o $\tau_b$ pelo algoritmo de
+Knight~\cite{knight1966}, na versão com empates~\cite{christensen2005}. Ela ordena os pares
+$(c(v), Y(v))$ e conta os pares discordantes como inversões num merge sort, em $O(n \log n)$. Na
+Twitch PT, isso leva 4\,ms, contra 0,7\,s para comparar os 1,8 milhão de pares um a um. A função
+\codigo{comparar\_rankings} aplica o $\tau_b$ a cada par de centralidade e referência.
+
+\paragraph{Validação.} As funções têm 66 testes (\codigo{pytest} e \codigo{Hypothesis}). O limiar dá
+o valor exato no grafo completo, $1/(n-2)$, na estrela, $2/(n-2)$, e no ciclo, 1. Com $\beta = 0$,
+o SIR atinge só a origem, e com $\beta = 1$, a componente inteira. O alcance médio coincide, a menos
+de 0,01, com o valor calculado à mão, por exemplo $(1+\beta)/2$ numa aresta. O $\tau_b$ dá 1 e $-1$
+em rankings iguais e invertidos, dá $5/\sqrt{30}$ num caso com empate e coincide com a contagem par
+a par em 200 casos aleatórios. Na Twitch PT, o $\tau_b$ do grau, do PageRank e do núcleo contra as
+visualizações bate com os valores de referência obtidos com o NetworkX (0,43, 0,44 e 0,40).
+
+\begin{table}[htbp]
+\centering
+\caption{$\tau_b$ de Kendall entre o ranking de cada centralidade e as duas referências, na Twitch
+PT ($\beta = 0{,}012$, $\gamma = 1$, 100 rodadas por nó, semente 2026).}
+\label{tab:concordancia}
+\small
+\begin{tabular}{@{}l r r@{}}
+\toprule
+Centralidade & $\tau_b$ com o alcance (P1) & $\tau_b$ com as visualizações (P2) \\
+\midrule
+Grau & 0,7033 & 0,4326 \\
+Proximidade & 0,7344 & 0,2889 \\
+Harmônica & \textbf{0,7435} & 0,3031 \\
+Intermediação & 0,5341 & 0,4133 \\
+PageRank & 0,6592 & \textbf{0,4386} \\
+Número de núcleo & 0,7301 & 0,4034 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Resultados.} A Tabela~\ref{tab:concordancia} responde às duas perguntas. Na \textbf{P1},
+as centralidades que medem a posição no centro da rede ficam à frente: a harmônica (0,7435), a
+proximidade e o núcleo. A intermediação fica em último (0,5341), porque ser ponte entre grupos não
+faz de um nó um bom ponto de partida. Com as sementes 1, 2 e 3, a ordem das seis se repete. Com
+$\beta = 0{,}016$ ($2\beta_c$), o núcleo passa à frente da harmônica. A \textbf{H1} se confirma: o
+núcleo supera o grau (0,7301 contra 0,7033), também nessas variações. Na \textbf{P2}, o PageRank
+(0,4386) e o grau (0,4326) preveem melhor as visualizações, e a proximidade e a harmônica, as
+melhores na P1, são as piores. A \textbf{H2} também se confirma: todas as centralidades concordam
+com as visualizações, mas menos do que com o alcance. O próprio alcance concorda com as
+visualizações só com $\tau_b = 0{,}3376$, o que indica que a audiência depende de fatores que a rede
+de amizades não registra.
