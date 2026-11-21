@@ -1,7 +1,66 @@
 % =====================================================================
-% Agrupamento e comunidades --- Arthur (Frente 4)
-% Só o Arthur edita este arquivo. Apague o \pendente quando escrever a seção.
+% Agrupamento e comunidades --- código do Arthur (Frente 4)
+% Texto final escrito na revisão do relatório, a partir das notas do Arthur
+% (relatorio/notas/secoes/arthur.tex) e dos números conferidos no código.
 % =====================================================================
 \section{Agrupamento e comunidades}\label{sec:comunidades}
 
-\pendente{Arthur: triângulos, agrupamento e transitividade; modularidade; Louvain, com o diagrama de atividades; propagação de rótulos; NMI e ARI. Complexidade, validação (Karate: agrupamento médio 0,5706 e $Q \approx 0{,}42$; Twitch PT: $Q$ entre 0,286 e 0,296) e o que as comunidades mostram. Até 1 página.}
+As funções ficam em \codigo{metricas/agrupamento.py} e em \codigo{comunidades/} e têm 24 testes
+(\codigo{pytest} e \codigo{Hypothesis}).
+
+\paragraph{Agrupamento.} Para contar os triângulos sem testar todos os trios de nós, em $O(n^3)$, a
+função \codigo{triangulos} percorre as arestas e, em cada aresta $(v, w)$, cruza os conjuntos de
+vizinhos das duas pontas: cada vizinho comum fecha um triângulo. Cruzar dois conjuntos custa o
+tamanho do menor, o que dá $O(m^{1{,}5})$ no total~\cite{schank2005}. O agrupamento local de $v$ é a
+fração dos pares de vizinhos de $v$ que também são vizinhos entre si (zero se o grau é menor que
+2)~\cite{watts1998}, e a transitividade é a fração das tríades conexas que fecham
+triângulos~\cite{newman2018}.
+
+\paragraph{Comunidades.} A modularidade de uma partição,
+$Q = \sum_c [\, L_c/m - (d_c/2m)^2 \,]$, compara as $L_c$ arestas internas de cada comunidade $c$
+com o esperado num grafo sorteado com os mesmos graus, em que $d_c$ é a soma dos graus de
+$c$~\cite{newman2004}; com totais por comunidade, ela custa $O(n + m)$. O método de
+Louvain~\cite{blondel2008} maximiza $Q$ em duas fases que se repetem
+(Figura~\ref{fig:uml-comportamento}c): cada nó, em ordem sorteada pela \codigo{semente}, passa
+para a comunidade vizinha que mais aumenta $Q$, até nenhum nó mudar; depois, cada comunidade vira
+um nó, com as arestas internas transformadas em laços e as externas somadas nos pesos. Cada
+passada custa $O(m)$, e o grafo encolhe a cada uma. Na propagação de rótulos
+(LPA)~\cite{raghavan2007}, cada nó adota o rótulo mais frequente entre os vizinhos, com empates
+sorteados, até todos já terem um dos mais frequentes (no máximo 100 iterações de $O(m)$). Para
+comparar partições, a NMI~\cite{danon2005} e o ARI~\cite{hubert1985} usam a tabela de contingência
+entre elas, montada em $O(n)$.
+
+\begin{table}[htbp]
+\centering
+\caption{Agrupamento e comunidades nas quatro bases. O Louvain e a LPA usam a semente 42; entre
+parênteses, o número de comunidades.}
+\label{tab:comunidades}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+Base & Triângulos & Agrup.\ médio & Transitividade & $Q$ do Louvain & $Q$ da LPA \\
+\midrule
+Twitch PT & 173.510 & 0,3199 & 0,1310 & 0,2848 (8) & 0,0343 (8) \\
+ego-Facebook & 1.612.010 & 0,6055 & 0,5192 & 0,8349 (16) & 0,8175 (71) \\
+Network of Thrones & 1.589 & 0,5312 & 0,2770 & 0,6506 (8) & 0,4454 (19) \\
+Karate Club & 45 & 0,5706 & 0,2557 & 0,4188 (4) & 0,3623 (3) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Validação e resultados.} No Karate e no ego-Facebook, os triângulos e o agrupamento médio
+da Tabela~\ref{tab:comunidades} coincidem com os valores publicados e com o NetworkX. No Karate, o
+Louvain chega a $Q$ entre 0,4156 e 0,4198 (o máximo dessa rede) nas sementes de 0 a 9, sempre com 4
+comunidades, que dividem em duas cada uma das facções reais ($Q = 0{,}3582$), daí a NMI de 0,49 com
+o gabarito. A LPA chega mais
+perto dele com a semente 42 (NMI de 0,59), mas é instável: nas sementes de 0 a 9, o $Q$ vai de 0,11
+a 0,40. Na Network of Thrones, as 8 comunidades do Louvain são os núcleos de enredo do livro:
+Porto Real (Tyrion, Cersei e Joffrey), a Muralha (Jon e Mance), o Casamento Vermelho (Robb, Catelyn e
+Walder Frey), Arya e Sandor Clegane, Daenerys, Jaime e Brienne, Stannis e Davos, e Bran. A Twitch PT é a menos modular: $Q$ de 0,28 a
+0,29 nas sementes de 0 a 9, com 6 a 8 comunidades, e, com a semente 42, só de 40\% a 66\% das
+ligações das seis maiores comunidades ficam dentro delas. Nessa rede, a LPA falha: um único rótulo se espalha pelos nós de grau alto e toma
+97\% dos nós ($Q = 0{,}03$ e NMI de 0,08 com o Louvain), enquanto no ego-Facebook, de grupos bem
+separados, os dois métodos concordam (NMI de 0,83). Por fim, os 154 nós do núcleo 37 se distribuem
+por cinco das oito comunidades: o miolo da Twitch PT não é um grupo à parte, e sim o que liga os
+grupos, o que ajuda a explicar por que os nós centrais espalham mais (Seção~\ref{sec:influenciadores}).

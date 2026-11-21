@@ -1,7 +1,15 @@
 % =====================================================================
-% Conclusão --- Kaio (Frente 6)
-% Só o Kaio edita este arquivo. Apague o \pendente quando escrever a seção.
+% Conclusão --- Frente 6 (Kaio)
+% Texto final escrito na revisão do relatório, com os resultados de todas as frentes.
 % =====================================================================
 \section{Conclusão}\label{sec:conclusao}
 
-\pendente{Kaio: o que a ferramenta faz, o resultado principal do problema aplicado e trabalhos futuros. Até 1/3 de página.}
+A ferramenta, em Python puro, lê ou gera redes, calcula grau, caminhos, seis centralidades,
+agrupamento e comunidades, simula espalhamentos SIR e mostra tudo numa interface web; 313 testes e a
+comparação com o NetworkX confirmam os resultados, e as medições, as complexidades. Na Twitch PT, nenhuma centralidade venceu nas duas perguntas: as que medem a posição
+no miolo da rede (harmônica, proximidade e núcleo) preveem melhor o alcance simulado, e o núcleo
+supera o grau, como previa a H1; o PageRank e o grau preveem melhor as visualizações reais, e todas
+concordam menos com elas do que com o alcance, como previa a H2. O streamer 127, primeiro em grau,
+proximidade, intermediação e PageRank, é o influenciador mais claro da rede. Como trabalhos futuros,
+ficam estimar o $\beta$ com dados reais de espalhamento, usar redes direcionadas e com o tempo das
+interações e combinar as centralidades num único ranking.

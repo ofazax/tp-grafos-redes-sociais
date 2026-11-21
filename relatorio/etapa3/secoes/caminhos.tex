@@ -4,37 +4,34 @@
 % =====================================================================
 \section{Grau, caminhos e proximidade}\label{sec:caminhos}
 
-As funções desta seção, em \codigo{metricas/grau.py}, \codigo{metricas/caminhos.py} e
-\codigo{metricas/proximidade.py}, recebem um \codigo{Grafo} sem alterá-lo e valem para grafos
-direcionados e não direcionados, porque só consultam os vizinhos de cada nó.
+As funções desta seção ficam em \codigo{metricas/grau.py}, \codigo{metricas/caminhos.py} e
+\codigo{metricas/proximidade.py} e valem para grafos direcionados e não direcionados, porque só
+consultam os vizinhos de cada nó.
 
-\paragraph{Grau.} A centralidade de grau divide o grau de cada nó por $n-1$, o maior possível,
-em $O(n)$~\cite{wasserman1994}. A densidade, $2m/(n(n-1))$, e o grau médio, $2m/n$, custam
-$O(1)$, porque o \codigo{Grafo} já guarda $n$ e $m$; a distribuição de graus custa
-$O(n \log n)$, pela ordenação~\cite{barabasi2016}.
+\paragraph{Grau.} A centralidade de grau divide o grau de cada nó por $n-1$, o maior possível, em
+$O(n)$~\cite{wasserman1994}. A densidade, $2m/(n(n-1))$, e o grau médio, $2m/n$, custam $O(1)$,
+porque o \codigo{Grafo} já guarda $n$ e $m$; a distribuição de graus custa $O(n \log n)$, pela
+ordenação.
 
-\paragraph{Buscas e componentes.} A busca em largura (BFS) dá a distância, em arestas, de uma
-origem até cada nó alcançável, em $O(n+m)$~\cite{cormen2022}. Ela usa uma fila \codigo{deque},
-porque retirar do início de uma lista comum custa $O(n)$~\cite{pythoncomplexidade}.
-A busca em profundidade~\cite{tarjan1972} é iterativa, com pilha, porque a recursão do Python para
-em cerca de mil níveis. As componentes conexas saem de uma BFS a partir de cada nó ainda não
-visitado, em $O(n+m)$ no total~\cite{hopcroft1973}. Para arestas com peso, o Dijkstra~\cite{dijkstra1959}
-usa \codigo{heapq}, em $O((n+m)\log n)$; na Network of Thrones, a distância de cada aresta é
-$1/\text{peso}$, e quem interage mais fica mais perto.
+\paragraph{Buscas e componentes.} A busca em largura (BFS) dá a distância, em arestas, de uma origem
+até cada nó alcançável, em $O(n+m)$~\cite{cormen2022}. Ela usa uma fila \codigo{deque}, porque retirar
+do início de uma lista comum custa $O(n)$~\cite{pythoncomplexidade}. A busca em profundidade é
+iterativa, com pilha, porque a recursão do Python para em cerca de mil níveis, e as componentes
+conexas saem de uma BFS a partir de cada nó ainda não visitado, em $O(n+m)$ no total. Para arestas
+com peso, o Dijkstra~\cite{dijkstra1959} usa \codigo{heapq}, em $O((n+m)\log n)$; na Network of
+Thrones, a distância de cada aresta é $1/\text{peso}$, e quem interage mais fica mais perto.
 
-\paragraph{Distâncias e proximidade.} Com uma BFS a partir de cada nó, em $O(n(n+m))$, a
-ferramenta calcula a distância média, o diâmetro~\cite{newman2018}, a proximidade (\emph{closeness})
-$C(v) = (n-1)/\sum_{u} d(v,u)$~\cite{bavelas1950,sabidussi1966} e a harmônica
-$H(v) = \sum_{u \neq v} 1/d(v,u)$~\cite{marchiori2000,boldi2014}. Em grafo desconexo, a
-proximidade é multiplicada pela fração de nós que $v$ alcança~\cite{wasserman1994}, e a harmônica
-dispensa correção. A distância média e o diâmetro aceitam uma amostra de $k$ origens, em
-$O(k(n+m))$.
+\paragraph{Distâncias e proximidade.} Com uma BFS a partir de cada nó, em $O(n(n+m))$, a ferramenta
+calcula a distância média, o diâmetro~\cite{newman2018}, a proximidade (\emph{closeness})
+$C(v) = (n-1)/\sum_{w} d(v,w)$~\cite{bavelas1950} e a harmônica
+$H(v) = \sum_{w \neq v} 1/d(v,w)$~\cite{boldi2014}. Em grafo desconexo, a proximidade é multiplicada
+pela fração de nós que $v$ alcança~\cite{wasserman1994}, e a harmônica dispensa correção. A
+distância média e o diâmetro aceitam uma amostra de $k$ origens, em $O(k(n+m))$.
 
-\paragraph{Validação e resultados.} Os testes usam grafos pequenos de resposta conhecida, as bases
-reais comparadas com o NetworkX e propriedades conferidas com o Hypothesis, como ``o Dijkstra sem
-pesos coincide com a BFS''. Todos os valores coincidiram com os de referência. As quatro bases são
-conexas. A Twitch PT é um mundo pequeno: dois streamers estão a 2,53 passos em média e a no máximo
-7, e o nó 127, com 767 vizinhos, tem também a maior proximidade (0,601). No Karate, o grau aponta o
-administrador (nó 33) e a proximidade, o instrutor (nó 0), com um vizinho a menos, mas mais perto do
-restante do clube: cada medida conta uma história, o que motiva a comparação da
-Seção~\ref{sec:influenciadores}.
+\paragraph{Validação e resultados.} Os testes comparam grafos pequenos de resposta conhecida e as
+bases reais com o NetworkX e conferem propriedades com o Hypothesis, como ``o Dijkstra sem pesos
+coincide com a BFS''. A Twitch PT é um mundo pequeno: dois
+streamers estão a 2,53 passos em média e a no máximo 7, e o nó 127, com 767 vizinhos, tem também a
+maior proximidade (0,601). No Karate, o grau aponta o administrador (nó 33), e a proximidade, o
+instrutor (nó 0), com um vizinho a menos, mas mais perto do restante do clube: cada medida conta uma
+história, o que motiva a comparação da Seção~\ref{sec:influenciadores}.

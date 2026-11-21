@@ -4,35 +4,26 @@
 % =====================================================================
 \section{Centralidades}\label{sec:centralidades}
 
-Além do grau e da proximidade, a ferramenta calcula três centralidades: a intermediação, que mede
-quanto o nó serve de ponte entre os outros; o PageRank, que mede o prestígio de receber ligações de
-nós também importantes; e o número de núcleo ($k$-core), que diz se o nó está no miolo mais denso
-da rede. As funções, em \codigo{metricas/centralidade.py} e \codigo{metricas/nucleo\_k.py}, recebem
-um \codigo{Grafo} sem alterá-lo, devolvem um valor por nó e, nos laços mais pesados, trocam os nós
-por inteiros de $0$ a $n-1$ e as adjacências por listas, que o Python percorre mais depressa que
-dicionários.
+Além do grau e da proximidade, a ferramenta calcula a intermediação, que mede quanto o nó serve de
+ponte entre os outros; o PageRank, que mede o prestígio de receber ligações de nós também
+importantes; e o número de núcleo ($k$-core), que diz se o nó está no miolo mais denso da rede. As
+funções ficam em \codigo{metricas/centralidade.py} e \codigo{metricas/nucleo\_k.py}.
 
 \paragraph{Intermediação.} A intermediação de $v$ soma, sobre os pares $s \neq v \neq t$, a fração
-dos caminhos mínimos de $s$ a $t$ que passam por $v$:
-\[
-  C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}},
-\]
-em que $\sigma_{st}$ é o número de caminhos mínimos de $s$ a $t$ e $\sigma_{st}(v)$, o número dos
-que passam por $v$. Calcular todos os pares e depois somar custaria $O(n^3)$. O algoritmo de
-Brandes~\cite{brandes2001} faz uma busca em largura a partir de cada origem $s$, contando os
-caminhos mínimos, e depois percorre os nós do mais distante para o mais próximo, acumulando
-\[
-  \delta_s(v) = \sum_{w \,:\, v \in P_s(w)} \frac{\sigma_{sv}}{\sigma_{sw}} \bigl(1 + \delta_s(w)\bigr),
-\]
-em que $P_s(w)$ são os nós que vêm logo antes de $w$ nos caminhos mínimos a partir de $s$. A soma
-de $\delta_s(v)$ sobre todas as origens dá a intermediação de $v$, em tempo $O(nm)$ e espaço
-$O(n + m)$, e o resultado é dividido por $(n-1)(n-2)$, como no NetworkX~\cite{hagberg2008}. Nas
-redes grandes, a função pode usar só $k$ origens sorteadas e multiplicar a soma por $n/k$, uma
-estimativa sem viés da versão exata~\cite{brandes2007}, em tempo $O(km)$.
+dos caminhos mínimos de $s$ a $t$ que passam por $v$,
+$C_B(v) = \sum_{s \neq v \neq t} \sigma_{st}(v)/\sigma_{st}$, em que $\sigma_{st}$ é o número de
+caminhos mínimos de $s$ a $t$ e $\sigma_{st}(v)$, o número dos que passam por $v$. Calcular todos os pares e depois somar custaria $O(n^3)$. O algoritmo de
+Brandes~\cite{brandes2001} faz uma BFS a partir de cada origem $s$, contando os caminhos mínimos, e
+depois percorre os nós do mais distante para o mais próximo, acumulando
+$\delta_s(v) = \sum_{w : v \in P_s(w)} (\sigma_{sv}/\sigma_{sw}) (1 + \delta_s(w))$, em que $P_s(w)$
+são os nós que vêm logo antes de $w$ nos caminhos mínimos a partir de $s$. A soma de $\delta_s(v)$
+sobre as origens dá $C_B(v)$, em tempo $O(nm)$ e espaço $O(n + m)$, e o resultado é dividido por
+$(n-1)(n-2)$, como no NetworkX. Nas redes grandes, a função pode usar só $k$ origens sorteadas e
+multiplicar a soma por $n/k$, uma estimativa sem viés da versão exata~\cite{brandes2007}, em $O(km)$.
 
 \paragraph{PageRank.} O PageRank~\cite{brin1998} modela um navegador aleatório que, a cada passo,
 segue uma aresta de saída com probabilidade $d = 0{,}85$, escolhida em proporção ao peso, ou salta
-para um nó qualquer com probabilidade $1 - d$. O PageRank de um nó é a fração do tempo que o
+para um nó qualquer com probabilidade $1 - d$; o PageRank de um nó é a fração do tempo que o
 navegador passa nele, calculada por iteração de potência:
 \[
   x^{(t+1)}_j = \frac{1 - d}{n} + d \sum_{i \to j} \frac{w_{ij}}{w_i}\, x^{(t)}_i
@@ -41,31 +32,23 @@ navegador passa nele, calculada por iteração de potência:
 em que $w_i$ é o peso total que sai de $i$ e $D$ é o conjunto dos nós sem saída, cujo valor é
 repartido entre todos. Cada iteração custa $O(n + m)$, e o laço para quando a soma das diferenças
 entre duas iterações fica abaixo de $n \cdot 10^{-8}$, o critério do NetworkX; na Twitch PT, isso
-leva 18 iterações. Se o limite de 100 iterações for atingido, o que pode acontecer em grafos
-bipartidos, a função emite um aviso em vez de falhar.
+leva 18 iterações.
 
 \paragraph{Núcleos.} O $k$-núcleo é o maior subgrafo em que todo nó tem pelo menos $k$ vizinhos
-dentro dele, e o número de núcleo de $v$ é o maior $k$ cujo $k$-núcleo contém $v$; os nós de núcleo
-alto costumam ser bons espalhadores~\cite{kitsak2010}. O algoritmo de Batagelj e
-Zaversnik~\cite{batagelj2003} remove sempre o nó de menor grau que restou: o grau dele nesse
-momento é o seu número de núcleo, e cada remoção diminui em 1 o grau dos vizinhos. Com os nós em
-baldes por grau, cada aresta é tratada uma única vez, em tempo total $O(n + m)$.
+dentro dele, e o número de núcleo de $v$ é o maior $k$ cujo $k$-núcleo contém $v$. O algoritmo de
+Batagelj e Zaversnik~\cite{batagelj2003} remove sempre o nó de menor grau que restou: o grau dele
+nesse momento é o seu número de núcleo, e cada remoção diminui em 1 o grau dos vizinhos. Com os nós
+em baldes por grau, cada aresta é tratada uma única vez, em tempo total $O(n + m)$.
 
-\paragraph{Validação.} As funções têm 42 testes (\codigo{pytest} e \codigo{Hypothesis}), com casos
-de resposta conhecida (estrela, grafo completo, caminho, ciclo, grafos desconexos e direcionados),
-invariantes em grafos aleatórios e valores de referência calculados com o NetworkX 3.7. Todos
-conferem: no Karate Club, por exemplo, a intermediação dos nós 0, 33 e 32 é 0,4376, 0,3041 e
-0,1452, e o núcleo máximo é 4; na Twitch PT, o nó 127 tem a maior intermediação (0,0993) e o maior
-PageRank (0,0119), e o núcleo máximo é 37, com 154 nós. Nas medições da
-Seção~\ref{sec:desempenho}, os resultados também foram comparados nó a nó com os do NetworkX nos 25
-grafos medidos, com diferença máxima de $5{,}6 \cdot 10^{-17}$, ou seja, só arredondamento.
-
-\paragraph{O que as métricas mostram.} Na Twitch PT, as três concordam no topo: os cinco maiores
-valores de intermediação e de PageRank são dos mesmos cinco streamers (nós 127, 1476, 1297, 290 e
-467), 8 dos 10 primeiros coincidem nas duas listas, e todos eles estão no núcleo 37, o miolo de 154
-nós (8\% da rede) em que cada um tem pelo menos 37 amigos dentro do próprio miolo. Na Network of
-Thrones, ao contrário, elas discordam: Tyrion Lannister tem o maior grau, e Jon Snow, a maior
-intermediação e o maior PageRank com peso (o número de vezes que dois personagens aparecem juntos);
-sem o peso, o PageRank põe Tyrion à frente. Cada métrica capta um aspecto diferente da importância
-de um nó, e por isso o ranking de influenciadores compara todas elas com o alcance no espalhamento
-SIR.
+\paragraph{Validação e resultados.} As funções têm 42 testes (\codigo{pytest} e \codigo{Hypothesis}),
+com casos de resposta conhecida, como estrela, ciclo e grafos desconexos, invariantes em grafos
+aleatórios e valores do NetworkX 3.7: no Karate, a intermediação dos nós 0, 33 e 32 é 0,4376,
+0,3041 e 0,1452. Nos 25 grafos
+da Seção~\ref{sec:desempenho}, a diferença máxima para o NetworkX foi de $5{,}6 \cdot 10^{-17}$, só
+arredondamento. Na Twitch PT, as três métricas concordam no topo: o nó 127 tem a maior intermediação
+(0,0993) e o maior PageRank (0,0119); os cinco primeiros nas duas listas são os mesmos (nós 127,
+1476, 1297, 290 e 467); e todos estão no núcleo 37, o miolo de 154 nós (8\% da rede) em que cada um
+tem pelo menos 37 amigos dentro do próprio miolo. Na Network of Thrones, ao contrário, elas
+discordam: Tyrion Lannister tem o maior grau, e Jon Snow, a maior intermediação e o maior PageRank
+com peso; sem o peso, o PageRank põe Tyrion à frente. Cada métrica capta um aspecto da importância de um nó,
+e por isso a Seção~\ref{sec:influenciadores} compara todas.

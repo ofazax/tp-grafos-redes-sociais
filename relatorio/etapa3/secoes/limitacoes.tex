@@ -1,7 +1,18 @@
 % =====================================================================
-% Limitações e ética --- Arthur (Frente 4)
-% Só o Arthur edita este arquivo. Apague o \pendente quando escrever a seção.
+% Limitações e ética --- Frente 4 (Arthur)
+% Texto final escrito na revisão do relatório, a partir das notas do Arthur
+% (relatorio/notas/secoes/arthur.tex).
 % =====================================================================
 \section{Limitações e ética}\label{sec:limitacoes}
 
-\pendente{Arthur: limitações da ferramenta e dos dados (por exemplo, o limite de resolução da modularidade, a amizade como indicador indireto de influência e o SIR simplificado) e os cuidados éticos (dados públicos e anonimizados, LGPD). Até 1/3 de página.}
+A amizade mútua é um indicador indireto de influência: o grafo é um retrato de um só momento e não
+registra quem assiste a quem. O SIR é simplificado, com o mesmo $\beta$ em todas as arestas e
+recuperação em um passo, e outro $\beta$ muda a ordem das primeiras centralidades
+(Seção~\ref{sec:influenciadores}). A modularidade tem limite de resolução: comunidades com menos de
+cerca de $\sqrt{2m}$ arestas tendem a ser fundidas a outras~\cite{fortunato2007}; além disso, o
+Louvain e a LPA dependem da semente, por isso relatamos faixas de valores. O Python puro também
+limita o tamanho das redes, e a intermediação exata fica inviável acima de dezenas de milhares de nós. Quanto à ética, as quatro bases são públicas, e a Twitch PT e o
+ego-Facebook trazem só identificadores numéricos. Mesmo assim, comunidades e centralidades podem
+revelar afinidades que ninguém declarou, e a LGPD~\cite{lgpd2018} exige finalidade e minimização no
+tratamento de dados pessoais. Por isso, o trabalho não tenta reidentificar streamers nem cruzar as
+bases com outras fontes, e os resultados descrevem a rede, não as pessoas.

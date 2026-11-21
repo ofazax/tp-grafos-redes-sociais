@@ -37,8 +37,9 @@
        influenciadores na rede da Twitch em português}
 
 % Nomes completos, como no Canvas.
-\author{Brunno Enrico Machado Costa\inst{1}, Vitória Rani Santos Menezes\inst{1}, Kaio Ferreira\inst{1},\\
-  Iago Verciano Romeiro\inst{1}, Arthur Victor Lopes de Melo Alves\inst{1}, Ravi Dornelas e Silva\inst{1}}
+\author{Brunno Enrico Machado Costa\inst{1}, Vitória Rani Santos Menezes\inst{1},\\
+  Kaio Ferreira Soares\inst{1}, Iago Verciano Romeiro\inst{1},\\
+  Arthur Victor Lopes de Melo Alves\inst{1}, Ravi Dornelas e Silva\inst{1}}
 
 \address{Engenharia de Computação -- Teoria dos Grafos e Computabilidade\\
   Pontifícia Universidade Católica de Minas Gerais (PUC Minas)}
@@ -48,37 +49,29 @@
 \maketitle
 
 \begin{abstract}
-  This report presents a tool, written in pure Python, that builds, analyzes and visualizes
-  social networks modeled as graphs. It reads four real networks and generates synthetic
-  graphs; computes degree, paths, centralities (closeness, harmonic, betweenness, PageRank and
-  core number), clustering and communities (Louvain and label propagation); simulates SIR
-  spreading; and shows the results in a web interface. We apply it to one problem: finding the
-  influencers of the network of Twitch streamers who broadcast in Portuguese, and finding which
-  centrality ranks them best, by comparing each ranking with the simulated reach and with the
-  real number of views. The algorithms were checked against published values and against
-  NetworkX, which was used only to compare performance; our centralities ran 1.1 to 9.5 times
-  faster than the NetworkX versions we compared with.
-  The centralities that measure the position at the center of the network (harmonic, closeness
-  and core number) best predict the simulated reach (Kendall $\tau_b$ up to 0.74, against 0.70
-  for degree), while PageRank and degree best predict the real views ($\tau_b \approx 0.44$),
-  which depend on more than the position in the friendship network.
+  This report presents a pure Python tool that builds, analyzes and visualizes social networks:
+  it reads four real networks, generates synthetic graphs, computes degree, paths, six
+  centralities, clustering and communities, simulates SIR spreading and shows the results in a
+  web interface. We use it to find the influencers of the network of Twitch streamers who
+  broadcast in Portuguese and which centrality ranks them best, comparing each ranking with the
+  simulated reach and with the real number of views. Our centralities match NetworkX and ran 1.1 to
+  9.5 times faster. The centralities that measure the position at the center of the network best
+  predict the simulated reach (Kendall
+  $\tau_b$ up to 0.74, against 0.70 for degree), while PageRank and degree best predict the real
+  views ($\tau_b \approx 0.44$).
 \end{abstract}
 
 \begin{resumo}
-  Este relatório apresenta uma ferramenta, escrita em Python puro, que constrói, analisa e
-  visualiza redes sociais modeladas como grafos. Ela lê quatro redes reais e gera grafos
-  sintéticos; calcula grau, caminhos, centralidades (proximidade, harmônica, intermediação,
-  PageRank e número de núcleo), agrupamento e comunidades (Louvain e propagação de rótulos);
-  simula espalhamentos SIR; e mostra os resultados numa interface web. Aplicamos a ferramenta a
-  um problema: encontrar os influenciadores da rede de streamers da Twitch que transmitem em
-  português e descobrir qual centralidade os ordena melhor, comparando cada ranking com o alcance
-  simulado e com as visualizações reais. Os algoritmos foram conferidos com valores publicados e
-  com o NetworkX, usado só para comparar o desempenho; nas centralidades, o nosso código foi de
-  1,1 a 9,5 vezes mais rápido que as versões do NetworkX comparadas.
-  As centralidades que medem a posição no centro da rede (harmônica, proximidade e número de
-  núcleo) preveem melhor o alcance simulado ($\tau_b$ de Kendall de até 0,74, contra 0,70 do
-  grau), e o PageRank e o grau preveem melhor as visualizações reais ($\tau_b \approx 0{,}44$),
-  que dependem de mais do que a posição na rede de amizades.
+  Este relatório apresenta uma ferramenta em Python puro que constrói, analisa e visualiza redes
+  sociais: ela lê quatro redes reais, gera grafos sintéticos, calcula grau, caminhos, seis
+  centralidades, agrupamento e comunidades, simula espalhamentos SIR e mostra os resultados numa
+  interface web. Com ela, buscamos os influenciadores da rede de streamers da Twitch que
+  transmitem em português e a centralidade que melhor os ordena, comparando cada ranking com o
+  alcance simulado e com as visualizações reais. As nossas centralidades coincidem com as do
+  NetworkX e foram de 1,1 a 9,5 vezes mais rápidas. As centralidades que medem a posição no centro
+  da rede preveem melhor o alcance simulado ($\tau_b$
+  de Kendall de até 0,74, contra 0,70 do grau), e o PageRank e o grau preveem melhor as
+  visualizações reais ($\tau_b \approx 0{,}44$).
 \end{resumo}
 
 \input{secoes/introducao}        % Brunno

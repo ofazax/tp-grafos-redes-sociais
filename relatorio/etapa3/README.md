@@ -6,29 +6,29 @@ desempenho, conclusões, todos os artefatos (diagramas, resultados e telas) e o 
 
 ## Quem escreve cada seção
 
-Os tamanhos somam cerca de 14 páginas. Se o PDF passar de 15, cada um corta da própria seção.
+O relatório está completo: 15 páginas, contando as referências, e nenhum `\pendente` sobrando.
+As seções de comunidades, interface, limitações e conclusão foram escritas na revisão final pelo
+Brunno, a partir das notas e do código do Arthur e do Kaio (isso está dito na Seção 14).
 
-| Arquivo em `secoes/` | Seção | Responsável | Tamanho | Situação |
-|---|---|---|---|---|
-| (`etapa3.tex`) | Título, abstract e resumo | Brunno; Ravi completa a frase do resultado | 3/4 de página | pronto, falta o resultado |
-| `introducao.tex` | 1. Introdução | Brunno | 3/4 de página | pronta |
-| `trabalhos.tex` | 2. Trabalhos relacionados | Vitória | 1/2 página | a escrever |
-| `problema.tex` | 3. Problema aplicado | Ravi | 3/4 de página | a escrever (resumir o da Etapa 1) |
-| `bases.tex` | 4. Bases de dados e grafos sintéticos | Brunno | 1 página | pronta |
-| `modelagem.tex` | 5. Modelagem do grafo e diagramas UML | Brunno | 1 página e meia | pronta |
-| `caminhos.tex` | 6. Grau, caminhos e proximidade | Vitória | 3/4 de página | a escrever |
-| `centralidades.tex` | 7. Centralidades | Iago | 1 página e meia | pronta (PR #23); dá para enxugar um pouco |
-| `comunidades.tex` | 8. Agrupamento e comunidades | Arthur | 1 página | a escrever |
-| `influenciadores.tex` | 9. Influenciadores na Twitch PT | Ravi | 1 página | a escrever |
-| `interface.tex` | 10. Interface | Kaio | 1 página | a escrever |
-| `desempenho.tex` | 11. Avaliação de desempenho | Iago | 1 página e meia | pronta (PR #23); dá para diminuir a figura |
-| `limitacoes.tex` | 12. Limitações e ética | Arthur | 1/3 de página | a escrever |
-| `conclusao.tex` | 13. Conclusão | Kaio | 1/3 de página | a escrever |
-| `responsabilidades.tex` | 14. Responsabilidades | Brunno | 1/2 página | pronta; conferir no fim |
+| Arquivo em `secoes/` | Seção | Código de | Situação |
+|---|---|---|---|
+| (`etapa3.tex`) | Título, abstract e resumo | todos | pronto |
+| `introducao.tex` | 1. Introdução | Brunno | pronta |
+| `trabalhos.tex` | 2. Trabalhos relacionados | Vitória | pronta |
+| `problema.tex` | 3. Problema aplicado | Ravi | pronta |
+| `bases.tex` | 4. Bases de dados e grafos sintéticos | Brunno | pronta |
+| `modelagem.tex` | 5. Modelagem do grafo e diagramas UML | Brunno | pronta |
+| `caminhos.tex` | 6. Grau, caminhos e proximidade | Vitória | pronta |
+| `centralidades.tex` | 7. Centralidades | Iago | pronta |
+| `comunidades.tex` | 8. Agrupamento e comunidades | Arthur | pronta (texto do Brunno) |
+| `influenciadores.tex` | 9. Influenciadores na Twitch PT | Ravi | pronta |
+| `interface.tex` | 10. Interface | Kaio | pronta (texto do Brunno) |
+| `desempenho.tex` | 11. Avaliação de desempenho | Iago | pronta |
+| `limitacoes.tex` | 12. Limitações e ética | Arthur | pronta (texto do Brunno) |
+| `conclusao.tex` | 13. Conclusão | Kaio | pronta (texto do Brunno) |
+| `responsabilidades.tex` | 14. Responsabilidades | Brunno | pronta |
 
-Cada arquivo a escrever já tem o título, o rótulo (`\label`) e um `\pendente{...}` em vermelho que
-diz o que vai nele. As outras seções já apontam para esses rótulos (`\ref{sec:comunidades}` etc.),
-então **não mude o `\section` nem o `\label`**: só troque o `\pendente` pelo texto.
+Se alguém mudar uma seção, compile de novo e confira se o PDF continua com no máximo 15 páginas.
 
 ## Regras
 
@@ -54,8 +54,8 @@ O PDF não vai para o Git; ele vai no .zip da entrega.
 
 ## Antes de entregar (revisão final)
 
-- [ ] Nenhum `\pendente` no PDF.
-- [ ] Entre 12 e 15 páginas.
-- [ ] Nomes completos de todos, curso, disciplina e instituição no cabeçalho.
-- [ ] Resumo e abstract com o resultado principal.
-- [ ] Tabela de responsabilidades conferida com o que cada um fez.
+- [x] Nenhum `\pendente` no PDF.
+- [x] Entre 12 e 15 páginas.
+- [x] Nomes completos de todos, curso, disciplina e instituição no cabeçalho.
+- [x] Resumo e abstract com o resultado principal.
+- [x] Tabela de responsabilidades conferida com o que cada um fez.

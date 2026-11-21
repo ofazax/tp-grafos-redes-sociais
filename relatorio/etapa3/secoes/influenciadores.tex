@@ -4,32 +4,26 @@
 % =====================================================================
 \section{Influenciadores na Twitch PT}\label{sec:influenciadores}
 
-As funções ficam em \codigo{aplicacao/influencia.py}, e \codigo{aplicacao/experimento.py} roda o
-experimento e grava os resultados em \codigo{aplicacao/resultados/}. A tela de influenciadores
-(Seção~\ref{sec:interface}) usa as mesmas funções e os mesmos parâmetros.
+Na pasta \codigo{aplicacao/}, o arquivo \codigo{influencia.py} tem as funções desta seção, e o
+\codigo{experimento.py} roda o experimento e grava os resultados em \codigo{resultados/}.
 
 \paragraph{Limiar e simulação.} A função \codigo{limiar\_epidemico} calcula $\beta_c$ a partir dos
 graus, em $O(n)$. A função \codigo{simular\_sir} faz uma rodada: a cada passo, cada infectado tenta
 transmitir uma vez para cada vizinho suscetível e se recupera. Os estados ficam num vetor de bytes
-que só é limpo nos nós atingidos, então cada rodada custa o tamanho do surto, e $O(n + m)$ no pior
-caso. A função \codigo{poder\_de\_espalhamento} repete a rodada $M = 100$ vezes a partir de cada
-nó, em $O(M n (n + m))$ no pior caso. Perto do limiar, quase todos os surtos são pequenos, e as
-191.200 rodadas levam cerca de 15\,s. Com $\beta = 0{,}012$ e semente 2026, os atingidos por rodada
-vão de 1 a 88 (4,6\% da rede), com mediana de 7,4.
+limpo só nos nós atingidos, então cada rodada custa o tamanho do surto, e $O(n + m)$ no pior caso. A
+função \codigo{poder\_de\_espalhamento} repete a rodada $M = 100$ vezes a partir de cada nó, em
+$O(M n (n + m))$ no pior caso; perto do limiar, quase todos os surtos são pequenos, e as 191.200
+rodadas levam cerca de 15\,s. Com $\beta = 0{,}012$ e semente 2026, o alcance médio vai de 1 a 88
+streamers (4,6\% da rede, a partir do nó 127), com mediana de 7,4.
 
-\paragraph{Concordância.} A função \codigo{tau\_de\_kendall} calcula o $\tau_b$ pelo algoritmo de
-Knight~\cite{knight1966}, na versão com empates~\cite{christensen2005}. Ela ordena os pares
-$(c(v), Y(v))$ e conta os pares discordantes como inversões num merge sort, em $O(n \log n)$. Na
-Twitch PT, isso leva 4\,ms, contra 0,7\,s para comparar os 1,8 milhão de pares um a um. A função
-\codigo{comparar\_rankings} aplica o $\tau_b$ a cada par de centralidade e referência.
-
-\paragraph{Validação.} As funções têm 66 testes (\codigo{pytest} e \codigo{Hypothesis}). O limiar dá
-o valor exato no grafo completo, $1/(n-2)$, na estrela, $2/(n-2)$, e no ciclo, 1. Com $\beta = 0$,
-o SIR atinge só a origem, e com $\beta = 1$, a componente inteira. O alcance médio coincide, a menos
-de 0,01, com o valor calculado à mão, por exemplo $(1+\beta)/2$ numa aresta. O $\tau_b$ dá 1 e $-1$
-em rankings iguais e invertidos, dá $5/\sqrt{30}$ num caso com empate e coincide com a contagem par
-a par em 200 casos aleatórios. Na Twitch PT, o $\tau_b$ do grau, do PageRank e do núcleo contra as
-visualizações bate com os valores de referência obtidos com o NetworkX (0,43, 0,44 e 0,40).
+\paragraph{Concordância e validação.} A função \codigo{tau\_de\_kendall} calcula o $\tau_b$ pelo
+algoritmo de Knight~\cite{knight1966}, na versão com empates~\cite{christensen2005}: ordena os pares
+$(c(v), Y(v))$ e conta os discordantes como inversões num \emph{merge sort}, em $O(n \log n)$, o que
+leva 4\,ms na Twitch PT, contra 0,7\,s para comparar os 1,8 milhão de pares um a um. As funções têm
+66 testes (\codigo{pytest} e \codigo{Hypothesis}): o limiar dá o valor exato no grafo completo, na
+estrela e no ciclo; o SIR atinge só a origem com $\beta = 0$ e a componente inteira com $\beta = 1$;
+o alcance médio coincide, a menos de 0,01, com o calculado à mão; e o $\tau_b$ coincide com a
+contagem par a par em 200 casos aleatórios e com os valores de referência do NetworkX.
 
 \begin{table}[htbp]
 \centering

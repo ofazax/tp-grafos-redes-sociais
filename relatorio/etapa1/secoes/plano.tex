@@ -27,5 +27,20 @@ Entrega (Etapa 3) & 21/11 & Relatório SBC de 12 a 15 páginas, slides, vídeo e
 \end{tabularx}
 \end{table}
 
-\pendente{Vitória: completar com o plano de desenvolvimento (fases, dependências entre as
-frentes e riscos) e atualizar as datas, se o grupo remarcar algum marco.}
+\paragraph{Fases e dependências.} Na primeira fase, a Frente 1 entrega a classe \codigo{Grafo}, os
+leitores e os geradores, de que todas as outras dependem; enquanto isso, as demais frentes estudam
+os algoritmos e preparam os testes com os valores de referência. Na segunda, as Frentes 2 a 4 avançam
+em paralelo, porque só dependem do \codigo{Grafo} e de um contrato comum: cada função recebe um
+\codigo{Grafo}, não o altera e devolve um valor por nó (\codigo{dict[nó, valor]}). A Frente 5 depende
+das seis centralidades das Frentes 2 e 3, por isso começa pelo SIR e pelo $\tau_b$, e a Frente 6 monta
+as telas com dados de exemplo e passa a usar as funções reais à medida que elas entram na
+\codigo{main}. Na terceira fase, a interface integra todas as funções, a Frente 3 mede o desempenho
+contra o NetworkX e a Frente 5 roda o experimento na Twitch PT. Na última, cada integrante escreve as
+suas seções do relatório final e grava a sua parte do vídeo.
+
+\paragraph{Riscos.} (1) O Python puro pode ser lento demais na intermediação exata, de custo $O(nm)$:
+a função aceita sortear só $k$ origens. (2) Um erro numa frente pode contaminar as outras: cada
+\emph{pull request} precisa de testes que comparem o resultado com valores conhecidos ou com o
+NetworkX. (3) O atraso de uma frente pode travar a interface: o contrato comum permite usar dados de
+exemplo até a função ficar pronta. (4) O prazo é curto: o cronograma compartilhado mostra o que está
+atrasado e o que bloqueia os outros.

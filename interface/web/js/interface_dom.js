@@ -233,6 +233,11 @@ function renderComunidadesPage() {
   setText('ariScoreVal', com.ari_str);
   document.getElementById('ariBar').style.width = com.ari_pct + '%';
   setText('gtComparisonLabel', com.rotulo_comparacao);
+  // Só o Karate Club tem gabarito; nas outras bases, a comparação é entre o Louvain e o LPA.
+  const temGabarito = String(com.rotulo_comparacao || '').startsWith('Gabarito');
+  const alvoComparacao = temGabarito ? 'Partição real' : 'Louvain × LPA';
+  setText('nmiHeader', `${alvoComparacao} (NMI)`);
+  setText('ariHeader', `${alvoComparacao} (ARI)`);
   setText('btnShowAllCommunities', `Mostrar Todas as Comunidades (${com.total_clusters})`);
 
   renderCommunityListUI();

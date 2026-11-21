@@ -4,14 +4,12 @@
 % =====================================================================
 \section{Bases de dados}\label{sec:bases}
 
-Usamos quatro redes públicas, já anonimizadas, baixadas das fontes originais e lidas pelas funções
-de \codigo{leitores/bases.py}, que descartam laços (arestas de um nó para ele mesmo). Por serem
-arquivos fixos, qualquer pessoa pode repetir os experimentos. As quatro são não direcionadas e
-conexas. A Tabela~\ref{tab:bases} resume as bases com números calculados pela própria ferramenta;
-os testes dos leitores conferem que os tamanhos lidos são os publicados. Nas três redes maiores, o
-grau é muito desigual: a mediana fica bem abaixo da média, e o maior grau passa de 20 vezes a média
-na Twitch PT e no ego-Facebook. Essa cauda longa, comum em redes sociais~\cite{barabasi2016}, é o
-que torna útil ordenar os nós por centralidade.
+Usamos quatro redes públicas e anonimizadas. As funções de \codigo{leitores/bases.py} leem os
+arquivos e descartam laços (arestas de um nó para ele mesmo). As quatro são não direcionadas e conexas, e a
+Tabela~\ref{tab:bases} as resume com números calculados pela ferramenta; os testes dos leitores
+conferem que os tamanhos lidos são os publicados. Nas três maiores, o grau é muito desigual: a
+mediana fica bem abaixo da média, e o maior grau passa de 20 vezes a média na Twitch PT e no
+ego-Facebook, uma cauda longa comum em redes sociais~\cite{newman2018}.
 
 \begin{table}[htbp]
 \centering
@@ -19,44 +17,39 @@ que torna útil ordenar os nós por centralidade.
 máximo, calculados pela ferramenta.}
 \label{tab:bases}
 \small
-\setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l r r r r r r Y@{}}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}l r r r r r r l@{}}
 \toprule
-Base & $n$ & $m$ & Densidade & \multicolumn{3}{c}{Grau} & Papel no trabalho \\
+Base & $n$ & $m$ & Densidade & \multicolumn{3}{c}{Grau} & Uso \\
 \cmidrule(lr){5-7}
  & & & & médio & mediano & máximo & \\
 \midrule
-Twitch PT & 1.912 & 31.299 & 0,0171 & 32,7 & 17 & 767 & Base principal: influenciadores \\
-ego-Facebook & 4.039 & 88.234 & 0,0108 & 43,7 & 25 & 1.045 & Rede maior: desempenho \\
-Network of Thrones & 303 & 1.008 & 0,0220 & 6,7 & 4 & 59 & Demonstração (com peso) \\
+Twitch PT & 1.912 & 31.299 & 0,0171 & 32,7 & 17 & 767 & Influenciadores \\
+ego-Facebook & 4.039 & 88.234 & 0,0108 & 43,7 & 25 & 1.045 & Desempenho \\
+Network of Thrones & 303 & 1.008 & 0,0220 & 6,7 & 4 & 59 & Demonstração \\
 Karate Club & 34 & 78 & 0,1390 & 4,6 & 3 & 17 & Corretude \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
 A \textbf{Twitch PT} é a rede de amizades mútuas entre streamers que transmitem em português,
 coletada por \cite{rozemberczki2021} e distribuída pelo SNAP~\cite{leskovec2014snap}. Cada nó traz
-atributos reais: o número de visualizações do canal, se ele é parceiro da Twitch (279 dos 1.912),
-se tem conteúdo adulto e há quantos dias existe. As visualizações servem de validação externa para
-o ranking de influenciadores. O \textbf{ego-Facebook} une dez redes ego de amizades, com os
-identificadores anonimizados~\cite{mcauley2012}; é a maior das quatro e tem muitos triângulos, o que
-a torna boa para medir o desempenho. Na \textbf{Network of Thrones}, dois personagens do terceiro
-livro de \emph{As Crônicas de Gelo e Fogo} se ligam quando os nomes aparecem a até 15 palavras um do
-outro, e o peso, de 3 a 95, conta quantas vezes isso acontece~\cite{beveridge2016}. Usamos o arquivo
-do repositório dos autores, maior que a versão descrita no artigo, e a escolhemos para a
-demonstração porque o público reconhece os personagens. Por fim, o \textbf{Karate Club} é o clube
-estudado por \cite{zachary1977}, que se dividiu em dois grupos de 17 membros; os valores conhecidos
-dessa rede, como o agrupamento médio de 0,5706 e a modularidade máxima de 0,4198, provam que os
-algoritmos estão corretos.
+atributos reais: as visualizações do canal, que servem de validação externa para o ranking de
+influenciadores, se ele é parceiro da Twitch (279 dos 1.912), se tem conteúdo adulto e há quantos
+dias existe. O \textbf{ego-Facebook} une dez redes ego de amizades~\cite{mcauley2012} e, por ser a maior,
+serve para medir o desempenho. Na \textbf{Network of
+Thrones}, dois personagens do terceiro livro de \emph{As Crônicas de Gelo e Fogo} se ligam quando os
+nomes aparecem a até 15 palavras um do outro, e o peso, de 3 a 95, conta quantas vezes isso
+acontece~\cite{beveridge2016}; ela serve à demonstração, porque o público reconhece os personagens.
+Por fim, o \textbf{Karate Club} é o clube que se dividiu em dois grupos de 17
+membros~\cite{zachary1977}, e os seus valores conhecidos servem para provar a corretude.
 
 \paragraph{Grafos sintéticos.} Para testar os algoritmos em tamanhos controlados e medir o
-desempenho (Seção~\ref{sec:desempenho}), \codigo{geradores/modelos.py} gera três modelos clássicos,
-todos com uma \codigo{semente} que repete o mesmo grafo. No de \textbf{Erdős--Rényi}~\cite{erdos1959},
-cada par de nós se liga com probabilidade $p$; em vez de sortear os $n(n-1)/2$ pares, o gerador pula
-direto para o próximo par sorteado, em tempo $O(n + m)$~\cite{batagelj2005}. No de
-\textbf{Barabási--Albert}~\cite{barabasi1999}, cada nó novo se liga a $m$ nós já existentes, com
-chance proporcional ao grau, o que cria nós muito conectados, como nas redes reais; o grafo final
-tem $m(n - m)$ arestas. No de \textbf{Watts--Strogatz}~\cite{watts1998}, cada nó de um anel se liga
-aos $k$ mais próximos e cada aresta é religada com probabilidade $p$, o que mantém o agrupamento
-alto e encurta as distâncias; o grafo final tem $nk/2$ arestas. A interface usa os mesmos geradores
-para criar redes de exemplo.
+desempenho, \codigo{geradores/modelos.py} gera três modelos clássicos, com uma \codigo{semente} que
+repete o grafo. No de \textbf{Erdős--Rényi}~\cite{erdos1959}, cada par de nós se liga com
+probabilidade $p$, e o gerador pula direto para o próximo par sorteado, em $O(n + m)$, em vez de
+sortear os $n(n-1)/2$ pares~\cite{batagelj2005}. No de \textbf{Barabási--Albert}~\cite{barabasi1999},
+cada nó novo se liga a $m$ nós já existentes, com chance proporcional ao grau, o que cria nós muito
+conectados, como nas redes reais. No de \textbf{Watts--Strogatz}~\cite{watts1998}, cada nó de um anel
+se liga aos $k$ mais próximos e cada aresta é religada com probabilidade $p$, o que mantém o
+agrupamento alto e encurta as distâncias. A interface usa os mesmos geradores.
