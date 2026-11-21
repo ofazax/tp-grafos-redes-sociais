@@ -1,7 +1,20 @@
 % =====================================================================
 % Trabalhos relacionados --- Vitória (Frente 2)
-% Só a Vitória edita este arquivo. Apague o \pendente quando escrever a seção.
+% Só a Vitória edita este arquivo.
 % =====================================================================
 \section{Trabalhos relacionados}\label{sec:trabalhos}
 
-\pendente{Vitória: três ou quatro trabalhos que usam grafos para achar influenciadores ou comparar centralidades (por exemplo, \cite{kitsak2010} e artigos do BraSNAM; veja a pesquisa do grupo), uma ou duas frases sobre cada um e o que este trabalho faz de diferente. Até meia página.}
+Simulando epidemias SIR em redes reais, um estudo clássico mostrou que o número de núcleo
+($k$-core) prevê os melhores espalhadores melhor do que o grau e a intermediação: o que importa é
+estar no miolo denso da rede, e não só ter muitos vizinhos~\cite{kitsak2010}. Uma revisão posterior
+reuniu dezenas de métodos para encontrar nós importantes, do grau ao PageRank e a métodos de
+aprendizado, e os comparou pelo alcance em simulações de espalhamento; nenhuma medida venceu em
+todas as redes~\cite{lu2016}. No BraSNAM, grafos de retweets dos protestos brasileiros de 2013
+mostraram que o PageRank e a centralidade de autovetor destacam usuários que a simples contagem de
+retweets não revela~\cite{theodoro2014}, e, numa rede de pilotos de Fórmula 1, o PageRank deu o
+ranking mais informativo entre as centralidades comparadas~\cite{faria2024}.
+
+Este trabalho segue a pergunta do estudo de espalhadores~\cite{kitsak2010}, mas numa rede brasileira, a Twitch em português,
+e com dois gabaritos em vez de um: o alcance no SIR e as visualizações reais de cada canal. Além
+disso, as seis centralidades comparadas e a simulação foram implementadas do zero, em Python puro,
+e conferidas contra valores publicados e contra o NetworkX~\cite{hagberg2008}.
