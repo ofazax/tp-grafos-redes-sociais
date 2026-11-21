@@ -761,17 +761,18 @@
               <div>
                 <div class="flex justify-between text-[11px] font-semibold text-petrol mb-0.5">
                   <span>Taxa de Infecção / Transmissão (β)</span>
-                  <span id="sirBetaVal" class="font-mono font-bold text-deepnavy">0.08</span>
+                  <span id="sirBetaVal" class="font-mono font-bold text-deepnavy">0.012</span>
                 </div>
-                <input type="range" id="sirBeta" min="0.01" max="0.30" step="0.01" value="0.08" oninput="document.getElementById('sirBetaVal').innerText=Number(this.value).toFixed(2)" class="w-full cursor-pointer">
+                <input type="range" id="sirBeta" min="0.001" max="0.300" step="0.001" value="0.012" oninput="document.getElementById('sirBetaVal').innerText=Number(this.value).toFixed(3)" class="w-full cursor-pointer">
+                <p id="sirLimiarInfo" class="text-[10px] text-petrol mt-0.5"></p>
               </div>
 
               <div>
                 <div class="flex justify-between text-[11px] font-semibold text-petrol mb-0.5">
                   <span>Taxa de Recuperação (γ)</span>
-                  <span id="sirGammaVal" class="font-mono font-bold text-deepnavy">0.02</span>
+                  <span id="sirGammaVal" class="font-mono font-bold text-deepnavy">1.00</span>
                 </div>
-                <input type="range" id="sirGamma" min="0.01" max="0.20" step="0.01" value="0.02" oninput="document.getElementById('sirGammaVal').innerText=Number(this.value).toFixed(2)" class="w-full cursor-pointer">
+                <input type="range" id="sirGamma" min="0.05" max="1.00" step="0.05" value="1.00" oninput="document.getElementById('sirGammaVal').innerText=Number(this.value).toFixed(2)" class="w-full cursor-pointer">
               </div>
 
               <div>
@@ -783,11 +784,11 @@
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
                   <label class="block text-[10.5px] font-medium text-petrol mb-0.5">Simulações</label>
-                  <input type="number" id="sirRunsInput" value="30" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
+                  <input type="number" id="sirRunsInput" value="100" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
                 </div>
                 <div>
                   <label class="block text-[10.5px] font-medium text-petrol mb-0.5">Semente (Seed)</label>
-                  <input type="number" id="sirSeedInput" value="42" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
+                  <input type="number" id="sirSeedInput" value="2026" class="w-full rounded-lg border border-mutedgreen bg-offwhite px-2.5 py-1 text-[11.5px] font-mono text-deepnavy">
                 </div>
               </div>
 
@@ -871,7 +872,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="font-bold text-[13px] text-deepnavy">Ranking dos K Maiores Influenciadores</h3>
-                <p class="text-[10.5px] text-petrol">Clique em uma linha para simular e focar o influenciador no mapa acima</p>
+                <p class="text-[10.5px] text-petrol">Ordenado pelo alcance no SIR. Clique em uma linha para simular e focar o influenciador no mapa acima</p>
               </div>
               <span class="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded bg-sage text-deepnavy">Top 5</span>
             </div>

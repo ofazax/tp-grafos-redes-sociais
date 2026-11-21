@@ -21,7 +21,9 @@ from redes.aplicacao.experimento import (
     tabela_de_concordancia,
 )
 from redes.aplicacao.influencia import (
+    beta_recomendado,
     comparar_rankings,
+    evolucao_sir,
     limiar_epidemico,
     poder_de_espalhamento,
     simular_sir,
@@ -337,6 +339,65 @@ def test_comparar_rankings():
     assert tabela["b"]["r"] == pytest.approx(-1.0)
     assert tabela["a"]["s"] == pytest.approx(5 / math.sqrt(30))
     assert tabela["b"]["s"] == pytest.approx(-5 / math.sqrt(30))
+
+
+# Beta recomendado e evolução passo a passo (usados pela interface)
+
+
+def test_beta_recomendado_e_um_e_meio_limiar():
+    assert beta_recomendado(completo(10)) == pytest.approx(1.5 / 8)
+    assert beta_recomendado(estrela(12), fator=2.0) == pytest.approx(0.4)
+
+
+def test_beta_recomendado_no_maximo_um():
+    # Ciclo: limiar 1, e 1,5 x 1 passaria de 1. Sem nó de grau 2, o limiar é infinito.
+    assert beta_recomendado(ciclo(5)) == 1.0
+    assert beta_recomendado(Grafo.de_arestas([(0, 1)])) == 1.0
+
+
+def test_beta_recomendado_fator_invalido():
+    with pytest.raises(ValueError):
+        beta_recomendado(completo(4), fator=0)
+
+
+def test_evolucao_beta_um_no_caminho():
+    # Caminho 0-1-2-3 a partir de 0 com beta = 1: um nó novo por passo.
+    e = evolucao_sir(caminho(4), 0, beta=1.0, rodadas=3, semente=1)
+    assert e["alcance"] == pytest.approx(1.0)
+    assert e["curva_i"] == pytest.approx([0.25, 0.25, 0.25, 0.25, 0.0])
+    assert e["curva_r"] == pytest.approx([0.0, 0.25, 0.5, 0.75, 1.0])
+    assert e["curva_s"] == pytest.approx([0.75, 0.5, 0.25, 0.0, 0.0])
+
+
+def test_evolucao_beta_zero():
+    e = evolucao_sir(completo(5), 2, beta=0.0, rodadas=4, semente=1)
+    assert e["alcance"] == pytest.approx(1 / 5)
+    assert e["curva_i"] == pytest.approx([1 / 5, 0.0])
+    assert e["estados"] == {0: "S", 1: "S", 2: "I", 3: "S", 4: "S"}
+
+
+def test_evolucao_retrato_no_pico():
+    # Estrela a partir do centro com beta = 1: o pico é o passo 1, com as 4 folhas infectadas.
+    e = evolucao_sir(estrela(5), 0, beta=1.0, rodadas=1, semente=1)
+    assert e["passo_do_retrato"] == 1
+    assert e["estados"] == {0: "R", 1: "I", 2: "I", 3: "I", 4: "I"}
+
+
+def test_evolucao_tem_o_mesmo_alcance_do_poder_de_espalhamento():
+    g = carregar_karate()
+    e = evolucao_sir(g, 0, beta=0.2, rodadas=50, semente=8)
+    rho = poder_de_espalhamento(g, 0.2, rodadas=50, semente=8, origens=[0])
+    assert e["alcance"] == rho[0]
+
+
+@settings(max_examples=60, deadline=None)
+@given(st.integers(min_value=0, max_value=10**6), st.floats(min_value=0.0, max_value=1.0))
+def test_evolucao_curvas_somam_um(semente, beta):
+    e = evolucao_sir(carregar_karate(), 0, beta=beta, rodadas=5, semente=semente)
+    for s, i, r in zip(e["curva_s"], e["curva_i"], e["curva_r"]):
+        assert s + i + r == pytest.approx(1.0)
+    assert e["curva_i"][-1] == 0.0
+    assert e["curva_r"][-1] == pytest.approx(e["alcance"])
 
 
 # Karate Club

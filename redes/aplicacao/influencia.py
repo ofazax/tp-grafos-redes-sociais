@@ -57,12 +57,18 @@ def _rodada_sir(
     gamma: float,
     rng: random.Random,
     estado: bytearray,
+    registro: list[tuple[int, list[int]]] | None = None,
 ) -> list[int]:
-    """Uma rodada do SIR sobre listas indexadas. Devolve os índices atingidos (recuperados).
+    """Uma rodada do SIR sobre listas indexadas. Devolve os índices atingidos (recuperados),
+    na ordem em que foram infectados.
 
     estado[i] vale 0 (suscetível), 1 (infectado) ou 2 (recuperado). Ele chega todo zerado e
     volta todo zerado: só os nós atingidos são tocados, então a rodada custa o tamanho do
     surto, e não O(n).
+
+    Se `registro` for uma lista, recebe um par por passo, no começo do passo: quantos nós já
+    foram atingidos e a lista dos infectados naquele passo. As listas não são copiadas, porque
+    a rodada não as altera depois. O registro não usa o gerador, então não muda o sorteio.
     """
     atingidos = list(dict.fromkeys(origens))
     for i in atingidos:
@@ -71,6 +77,8 @@ def _rodada_sir(
     aleatorio = rng.random
 
     while infectados:
+        if registro is not None:
+            registro.append((len(atingidos), infectados))
         proximos: list[int] = []
         for u in infectados:
             # u tenta transmitir, uma vez por passo, para cada vizinho ainda suscetível.
@@ -195,6 +203,98 @@ def poder_de_espalhamento(
             total += len(_rodada_sir(adj, [i], beta, gamma, rng, estado))
         resultado[v] = total / (rodadas * n)
     return resultado
+
+
+def beta_recomendado(g: Grafo, fator: float = 1.5) -> float:
+    """O beta do SIR um pouco acima do limiar epidêmico: fator * beta_c, no máximo 1.
+
+    É a regra da descrição do problema (beta = 1,5 beta_c, que dá 0,012 na Twitch PT): perto
+    do limiar, o alcance varia bastante de um nó para outro, e o ranking diz alguma coisa. Se
+    o limiar for infinito (nenhum nó com grau 2 ou mais), devolve 1. Só para grafo não
+    direcionado, como o limiar.
+
+    Tempo: O(n). Espaço: O(n).
+    """
+    if fator <= 0:
+        raise ValueError(f"fator deve ser positivo, recebeu {fator}")
+    return min(1.0, fator * limiar_epidemico(g))
+
+
+def evolucao_sir(
+    g: Grafo,
+    origens: No | Iterable[No],
+    beta: float,
+    gamma: float = 1.0,
+    rodadas: int = 100,
+    semente: int | None = None,
+) -> dict:
+    """O SIR passo a passo, para desenhar: curvas S(t), I(t) e R(t) na média das rodadas e um retrato.
+
+    Usa o mesmo modelo do simular_sir e do poder_de_espalhamento. Devolve um dicionário com:
+    - "alcance": fração média da rede atingida (com uma origem e a mesma semente, é igual ao
+      poder_de_espalhamento daquela origem);
+    - "curva_s", "curva_i", "curva_r": a fração de suscetíveis, infectados e recuperados em cada
+      passo t = 0, 1, 2, ..., na média das rodadas (uma rodada que já acabou conta com o estado
+      final dela);
+    - "estados": o estado de cada nó ("S", "I" ou "R") na primeira rodada, no passo com mais
+      infectados (o pico), e "passo_do_retrato", o número desse passo.
+
+    Tempo: O(rodadas * (n + m)) no pior caso, mais O(rodadas * T) para as curvas, com T o maior
+    número de passos. Espaço: O(n + m + rodadas * T).
+    """
+    _validar_parametros(beta, gamma)
+    if rodadas < 1:
+        raise ValueError(f"rodadas deve ser pelo menos 1, recebeu {rodadas}")
+    lista = _lista_de_origens(g, origens)
+
+    indexador, adj = para_listas_indexadas(g)
+    n = len(indexador)
+    indices = [indexador.para_indice[v] for v in lista]
+    rng = random.Random(semente)
+    estado = bytearray(n)
+
+    total_atingidos = 0
+    registros: list[list[tuple[int, int]]] = []
+    estados: dict[No, str] = {}
+    passo_do_retrato = 0
+    for rodada in range(rodadas):
+        registro: list[tuple[int, list[int]]] = []
+        atingidos = _rodada_sir(adj, indices, beta, gamma, rng, estado, registro)
+        total_atingidos += len(atingidos)
+        # Estado final: todos os atingidos recuperados, nenhum infectado.
+        registros.append([(k, len(infectados)) for k, infectados in registro] + [(len(atingidos), 0)])
+
+        if rodada == 0:
+            passo_do_retrato = max(range(len(registro)), key=lambda t: len(registro[t][1]))
+            ja_atingidos, infectados_no_pico = registro[passo_do_retrato]
+            no_pico = set(infectados_no_pico)
+            recuperados = {i for i in atingidos[:ja_atingidos] if i not in no_pico}
+            estados = {
+                v: ("I" if i in no_pico else "R" if i in recuperados else "S")
+                for i, v in enumerate(indexador.para_no)
+            }
+
+    passos = max(len(r) for r in registros)
+    curva_s, curva_i, curva_r = [], [], []
+    for t in range(passos):
+        s = i = r = 0
+        for registro_contado in registros:
+            k, infectados = registro_contado[min(t, len(registro_contado) - 1)]
+            s += n - k
+            i += infectados
+            r += k - infectados
+        curva_s.append(s / (rodadas * n))
+        curva_i.append(i / (rodadas * n))
+        curva_r.append(r / (rodadas * n))
+
+    return {
+        "alcance": total_atingidos / (rodadas * n),
+        "curva_s": curva_s,
+        "curva_i": curva_i,
+        "curva_r": curva_r,
+        "estados": estados,
+        "passo_do_retrato": passo_do_retrato,
+    }
 
 
 def _pares_empatados(valores: list[float]) -> int:
