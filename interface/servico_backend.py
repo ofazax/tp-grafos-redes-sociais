@@ -80,6 +80,17 @@ except ImportError:
     _louvain_backend = None
     _modularidade_backend = None
 
+try:
+    from redes.comunidades.avaliacao import ari as _ari_backend  # type: ignore[import-not-found]
+    from redes.comunidades.avaliacao import nmi as _nmi_backend  # type: ignore[import-not-found]
+    from redes.comunidades.rotulos import (  # type: ignore[import-not-found]
+        propagacao_de_rotulos as _propagacao_backend,
+    )
+except ImportError:
+    _ari_backend = None
+    _nmi_backend = None
+    _propagacao_backend = None
+
 
 # ---------------------------------------------------------------------------
 # Caches em memória de execução para evitar releitura de disco repetida
@@ -202,6 +213,11 @@ def executar_propagacao_rotulos(
     if not nos:
         return {}, 0.0
 
+    # Usa a implementação da Frente 4 (redes/comunidades/rotulos.py) quando ela existe.
+    if _propagacao_backend is not None and not g.direcionado:
+        particao = _propagacao_backend(g, semente=semente)
+        return particao, calcular_modularidade_particao(g, particao)
+
     gerador = random.Random(semente)
     rotulo: dict[No, int] = {v: i for i, v in enumerate(nos)}
 
@@ -308,6 +324,15 @@ def calcular_nmi_e_ari(
     n = len(chaves)
     if n < 2:
         return 0.0, 0.0
+
+    # Usa as funções da Frente 4 (redes/comunidades/avaliacao.py) quando elas existem.
+    if _nmi_backend is not None and _ari_backend is not None:
+        a = {v: particao_a[v] for v in chaves}
+        b = {v: particao_b[v] for v in chaves}
+        return (
+            max(0.0, min(1.0, float(_nmi_backend(a, b)))),
+            max(0.0, min(1.0, float(_ari_backend(a, b)))),
+        )
 
     cont_a: dict[int, int] = defaultdict(int)
     cont_b: dict[int, int] = defaultdict(int)
