@@ -1808,7 +1808,7 @@ class GerenciadorSessaoBackend:
                 "semente": self.sir_seed,
                 "no_semente": str(semente_sir) if semente_sir is not None else "",
                 "no_semente_rotulo": formatar_rotulo_no(semente_sir) if semente_sir is not None else "",
-                "alcance_str": f"{sir_detalhe['alcance_medio'] * 100.0:.1f}%".replace(".", ","),
+                "alcance_str": f"{alcance_top.get(semente_sir, sir_detalhe['alcance_medio']) * 100.0:.1f}%".replace(".", ","),
                 "infectados_str": f"{formatar_int_br(cont_inf)} nós",
                 "recuperados_str": f"{formatar_int_br(cont_rec)} nós",
                 "suscetiveis_str": f"{formatar_int_br(cont_sus)} nós",
