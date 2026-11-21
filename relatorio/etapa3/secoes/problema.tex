@@ -5,38 +5,35 @@
 \section{Problema aplicado}\label{sec:problema}
 
 Queremos saber quais streamers da Twitch PT são os influenciadores e qual centralidade os encontra
-melhor. A pergunta se divide em duas. A \textbf{P1} pergunta qual centralidade melhor ordena os
-streamers pelo alcance de um espalhamento simulado que começa em cada um. A \textbf{P2} pergunta qual
-melhor os ordena pelas visualizações reais do canal. A hipótese \textbf{H1} é que o número de núcleo
-supera o grau na P1, como já se observou em outras redes~\cite{kitsak2010}. A hipótese \textbf{H2} é
-que todas as centralidades concordam com as visualizações, mas menos do que com o alcance, porque a
+melhor. A pergunta se divide em duas: a \textbf{P1} pergunta qual centralidade melhor ordena os
+streamers pelo alcance de um espalhamento simulado que começa em cada um, e a \textbf{P2}, qual melhor
+os ordena pelas visualizações reais do canal. A hipótese \textbf{H1} é que o número de núcleo supera
+o grau na P1, como já se observou em outras redes~\cite{kitsak2010}. A hipótese \textbf{H2} é que
+todas as centralidades concordam com as visualizações, mas menos do que com o alcance, porque a
 audiência também depende de fatores que o grafo não registra, como a idade do canal.
 
 \paragraph{Entrada e saída.} A entrada é o grafo $G = (V, E)$ da Twitch PT (Seção~\ref{sec:bases}),
-com $n = 1.912$ streamers e $m = 31.299$ amizades mútuas, e as visualizações $w(v)$ de cada canal.
-São comparadas seis centralidades $c$: grau, proximidade e harmônica (Seção~\ref{sec:caminhos}),
+com $n = 1.912$ streamers e $m = 31.299$ amizades mútuas, e as visualizações $w(v)$ de cada canal. São
+comparadas seis centralidades $c$: grau, proximidade e harmônica (Seção~\ref{sec:caminhos}),
 intermediação, PageRank e número de núcleo $k_s$ (Seção~\ref{sec:centralidades}). Para cada $c$, a
 saída é o ranking dos streamers por $c$, com os empates desfeitos pelo grau e depois pelo
 identificador do nó, e dois números: $\tau_b(c, \rho)$, a concordância do ranking com o alcance
-$\rho$, e $\tau_b(c, w)$, a concordância com as visualizações. A centralidade com o maior
-$\tau_b(c, \rho)$ responde à P1, e a com o maior $\tau_b(c, w)$, à P2.
+$\rho$, que responde à P1, e $\tau_b(c, w)$, a concordância com as visualizações, que responde à P2.
 
 \paragraph{Como validar.} O alcance $\rho(v)$ é a fração média da rede atingida por uma simulação SIR
-em tempo discreto que começa só em $v$, repetida $M = 100$ vezes. A cada passo, cada infectado
+em tempo discreto que começa só em $v$, repetida $M = 100$ vezes: a cada passo, cada infectado
 transmite para cada vizinho suscetível com probabilidade $\beta$ e se recupera no passo seguinte
-($\gamma = 1$). O valor de $\beta$ fica pouco acima do limiar epidêmico
-$\beta_c = \langle k \rangle / (\langle k^2 \rangle - \langle k \rangle) \approx 0{,}0079$~\cite{newman2002}.
-Abaixo dele, todo surto morre pequeno. Muito acima, quase toda a rede é atingida. Nos dois casos, o
-alcance não distingue os nós. Por isso usamos $\beta = 0{,}012 \approx 1{,}5\,\beta_c$, seguindo a
-escolha de um valor pouco acima do limiar feita em~\cite{kitsak2010}. A concordância entre uma
-centralidade $c$ e uma referência $Y \in \{\rho, w\}$ é o $\tau$ de Kendall~\cite{kendall1938}, na
-variante que trata os empates~\cite{kendall1945}:
+($\gamma = 1$). Abaixo do limiar epidêmico
+$\beta_c = \langle k \rangle / (\langle k^2 \rangle - \langle k \rangle) \approx 0{,}0079$~\cite{newman2002},
+todo surto morre pequeno, e muito acima dele quase toda a rede é atingida; nos dois casos, o alcance
+não distingue os nós. Por isso, usamos $\beta = 0{,}012 \approx 1{,}5\,\beta_c$, pouco acima do
+limiar, como em~\cite{kitsak2010}. A concordância entre uma centralidade $c$ e uma referência
+$Y \in \{\rho, w\}$ é o $\tau_b$ de Kendall, a variante que trata os empates~\cite{kendall1945}:
 \[
   \tau_b(c, Y) = \frac{P - Q}{\sqrt{(P + Q + T_c)(P + Q + T_Y)}},
 \]
-em que, entre os $\binom{n}{2}$ pares de nós, $P$ e $Q$ contam os pares concordantes e
-discordantes, e $T_c$ e $T_Y$ os empatados só em $c$ ou só em $Y$. O $\tau_b$ só olha a ordem, o que
-permite comparar medidas em escalas diferentes. O tratamento dos empates é essencial, porque o grau
-assume só 187 valores distintos e $k_s$ só 37. Em termos formais, as hipóteses ficam
-\textbf{H1}: $\tau_b(k_s, \rho) > \tau_b(\text{grau}, \rho)$; e \textbf{H2}:
-$0 < \tau_b(c, w) < \tau_b(c, \rho)$ para toda $c$.
+em que, entre os $\binom{n}{2}$ pares de nós, $P$ e $Q$ contam os pares concordantes e discordantes,
+e $T_c$ e $T_Y$, os empatados só em $c$ ou só em $Y$. O $\tau_b$ só olha a ordem, o que permite
+comparar medidas em escalas diferentes, e tratar os empates é essencial, porque o grau assume só 187
+valores distintos e $k_s$, só 37. Assim, \textbf{H1}: $\tau_b(k_s, \rho) > \tau_b(\text{grau}, \rho)$;
+e \textbf{H2}: $0 < \tau_b(c, w) < \tau_b(c, \rho)$ para toda $c$.
