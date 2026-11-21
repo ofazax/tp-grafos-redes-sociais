@@ -270,6 +270,19 @@ function renderInfluenciadoresPage() {
     </option>
   `).join(''));
 
+  // Os controles mostram os parâmetros usados pelo backend (o beta muda com a rede ativa).
+  const betaInput = document.getElementById('sirBeta');
+  if (betaInput) betaInput.value = sir.beta;
+  setText('sirBetaVal', Number(sir.beta).toFixed(3));
+  const gammaInput = document.getElementById('sirGamma');
+  if (gammaInput) gammaInput.value = sir.gamma;
+  setText('sirGammaVal', Number(sir.gamma).toFixed(2));
+  const runsInput = document.getElementById('sirRunsInput');
+  if (runsInput) runsInput.value = sir.simulacoes;
+  const seedInput = document.getElementById('sirSeedInput');
+  if (seedInput) seedInput.value = sir.semente;
+  setText('sirLimiarInfo', `${sir.limiar_str} • recomendado: β ≈ 1,5 × β_c`);
+
   setText('sirStatInfected', sir.infectados_str);
   setText('sirStatRecovered', sir.recuperados_str);
   setText('sirStatSusceptible', sir.suscetiveis_str);

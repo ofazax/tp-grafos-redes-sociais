@@ -1,0 +1,7 @@
+centralidade,tau_alcance,tau_visualizacoes
+grau,0.7033,0.4326
+proximidade,0.7344,0.2889
+harmonica,0.7435,0.3031
+intermediacao,0.5341,0.4133
+pagerank,0.6592,0.4386
+nucleo,0.7301,0.4034

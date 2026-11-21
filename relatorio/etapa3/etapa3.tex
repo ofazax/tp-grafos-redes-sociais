@@ -57,7 +57,10 @@
   real number of views. The algorithms were checked against published values and against
   NetworkX, which was used only to compare performance; our centralities ran 1.1 to 9.5 times
   faster than the NetworkX versions we compared with.
-  \pendente{Ravi: one sentence with the main result}
+  The centralities that measure the position at the center of the network (harmonic, closeness
+  and core number) best predict the simulated reach (Kendall $\tau_b$ up to 0.74, against 0.70
+  for degree), while PageRank and degree best predict the real views ($\tau_b \approx 0.44$),
+  which depend on more than the position in the friendship network.
 \end{abstract}
 
 \begin{resumo}
@@ -71,7 +74,10 @@
   simulado e com as visualizações reais. Os algoritmos foram conferidos com valores publicados e
   com o NetworkX, usado só para comparar o desempenho; nas centralidades, o nosso código foi de
   1,1 a 9,5 vezes mais rápido que as versões do NetworkX comparadas.
-  \pendente{Ravi: uma frase com o resultado principal}
+  As centralidades que medem a posição no centro da rede (harmônica, proximidade e número de
+  núcleo) preveem melhor o alcance simulado ($\tau_b$ de Kendall de até 0,74, contra 0,70 do
+  grau), e o PageRank e o grau preveem melhor as visualizações reais ($\tau_b \approx 0{,}44$),
+  que dependem de mais do que a posição na rede de amizades.
 \end{resumo}
 
 \input{secoes/introducao}        % Brunno

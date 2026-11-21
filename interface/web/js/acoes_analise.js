@@ -4,7 +4,8 @@ const LAYOUT_SEED_INCREMENT = 7;
 const LAYOUT_RECALC_ITERATIONS = 40;
 const COMMUNITY_FOCUS_ZOOM = 2.2;
 
-const SIR_DEFAULTS = { beta: 0.08, gamma: 0.02, runs: 30, seed: 42 };
+// Padrões da Frente 5: gamma = 1 e 100 rodadas. O beta vem do backend (1,5 x limiar da rede ativa).
+const SIR_DEFAULTS = { beta: 0.012, gamma: 1.0, runs: 100, seed: 2026 };
 
 // ---------------------------------------------------------------------------
 // Caminhos (página Visualizar Rede)

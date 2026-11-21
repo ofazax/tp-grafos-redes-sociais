@@ -17,8 +17,11 @@ Função & Arquivo & Complexidade & Situação \\
 \codigo{simular\_sir} (uma rodada) & \codigo{aplicacao/influencia.py} & $O(n + m)$ no pior caso, com $\gamma = 1$ & \feito \\
 \codigo{poder\_de\_espalhamento} & \codigo{aplicacao/influencia.py} & $O(M \cdot n \cdot (n + m))$ no pior caso~\cite{kitsak2010} & \feito \\
 \codigo{tabela\_de\_alcance} (Twitch PT) & \codigo{aplicacao/experimento.py} & o do anterior $+ O(n \log n)$ & \feito \\
-\codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n^2)$ ingênuo~\cite{kendall1938} & \afazer \\
-\codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & --- & \afazer \\
+\codigo{tau\_de\_kendall} (tau-b) & \codigo{aplicacao/influencia.py} & $O(n \log n)$~\cite{kendall1945,knight1966,christensen2005} & \feito \\
+\codigo{comparar\_rankings} & \codigo{aplicacao/influencia.py} & $O(c \cdot r \cdot n \log n)$ & \feito \\
+\codigo{tabela\_de\_concordancia} (Twitch PT) & \codigo{aplicacao/experimento.py} & $O(nm)$, pela intermediação & \feito \\
+\codigo{beta\_recomendado} ($1{,}5\,\beta_c$) & \codigo{aplicacao/influencia.py} & $O(n)$ & \feito \\
+\codigo{evolucao\_sir} (curvas S, I, R) & \codigo{aplicacao/influencia.py} & $O(M (n + m))$ no pior caso & \feito \\
 \bottomrule
 \end{tabularx}}
 
@@ -39,6 +42,15 @@ Função & Arquivo & Complexidade & Situação \\
         semente, o resultado se repete.
   \item O \codigo{simular\_sir} aceita $\gamma < 1$ (o infectado tenta de novo a cada passo), porque
         o caso de uso UC14 deixa o usuário escolher $\gamma$; o experimento usa $\gamma = 1$.
+  \item O $\tau_b$ usa o algoritmo de Knight~\cite{knight1966}, na versão com empates descrita por
+        \cite{christensen2005}: ordena os pares $(x, y)$, conta os empates e conta os pares
+        discordantes como inversões de $y$ num merge sort. Custa $O(n \log n)$, e não $O(n^2)$:
+        na Twitch PT, 4\,ms contra 0,7\,s da versão que compara os 1,8 milhão de pares. A versão
+        direta fica nos testes, como referência.
+  \item O $\tau_b$, e não o $\tau$ simples, porque o grau tem só 187 valores distintos e o núcleo só
+        37: sem descontar os empates, as duas medidas sairiam prejudicadas.
+  \item Se todos os valores de um lado são iguais, ou há menos de 2 nós, o $\tau_b$ é NaN: não há
+        ordem para comparar.
 \end{itemize}
 
 \subsection{Corretude: testes e resultados}
@@ -53,10 +65,13 @@ Alcance médio na aresta única, $(1+\beta)/2$, com $\beta = 0{,}3$ & sintético
 Alcance médio na estrela ($n = 10$, $\beta = 0{,}4$), do centro e de uma folha & sintético & ok ($\pm$0,01) & $0{,}46$ e $0{,}268$ \\
 Alcance com $\gamma = 0{,}5$, $\beta = 0{,}2$ na aresta única & sintético & ok ($\pm$0,01) & $2/3$ \\
 Limiar: completo $1/(n-2)$, estrela $2/(n-2)$, ciclo 1 & sintético & ok & fórmulas \\
-Kendall de rankings iguais e invertidos & sintético & \falta & 1 e $-1$ \\
+Kendall de rankings iguais e invertidos & sintético & 1 e $-1$ & 1 e $-1$ \\
+Kendall com empate: $x = (1,2,2,3)$, $y = (1,2,3,4)$ & sintético & 0,9129 & $5/\sqrt{30}$ \\
+Kendall no exemplo da documentação do SciPy (empates dos dois lados) & sintético & $-0{,}4714$ & $-0{,}4714$ \\
+Kendall igual à definição direta, par a par (Hypothesis, 200 casos) & aleatórios & ok & --- \\
 Limiar epidêmico & Twitch PT & 0,007876 & 0,0079 \\
-$\tau$ entre grau e visualizações & Twitch PT & \falta & $\approx$ 0,43 (NetworkX) \\
-$\tau$ entre PageRank / k-core e visualizações & Twitch PT & \falta & $\approx$ 0,44 / 0,40 \\
+$\tau$ entre grau e visualizações & Twitch PT & 0,4326 & $\approx$ 0,43 (NetworkX) \\
+$\tau$ entre PageRank / k-core e visualizações & Twitch PT & 0,4386 / 0,4034 & $\approx$ 0,44 / 0,40 \\
 \bottomrule
 \end{tabularx}}
 
@@ -84,8 +99,35 @@ todos no núcleo mais interno ($k_s = 37$); o nó 36 (grau 276) entra no top 10,
 \bottomrule
 \end{tabularx}}
 
-\pendente{tabela com o $\tau$ de cada centralidade contra o alcance SIR e contra as visualizações;
-o k-core prevê os espalhadores melhor que o grau?}
+Concordância de cada centralidade com o alcance e com as visualizações ($\tau_b$ de Kendall; o
+mesmo experimento, mais 30\,s para as centralidades). Arquivo:
+\codigo{aplicacao/resultados/concordancia\_twitch.csv}.
+
+{\small\begin{tabularx}{\linewidth}{@{}Y r r@{}}
+\toprule
+Centralidade & $\tau_b$ × alcance & $\tau_b$ × visualizações \\
+\midrule
+Grau & 0,7033 & 0,4326 \\
+Proximidade & 0,7344 & 0,2889 \\
+Harmônica & \textbf{0,7435} & 0,3031 \\
+Intermediação & 0,5341 & 0,4133 \\
+PageRank & 0,6592 & \textbf{0,4386} \\
+Número de núcleo & 0,7301 & 0,4034 \\
+\bottomrule
+\end{tabularx}}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{P1:} a harmônica é a que melhor prevê o alcance (0,7435), seguida da proximidade e
+        do núcleo. Com as sementes 1, 2 e 3, a ordem das seis se repete. Com $\beta = 0{,}016$
+        ($2\beta_c$), o núcleo passa à frente (0,795 contra 0,786 da harmônica).
+  \item \textbf{P2:} o PageRank prevê melhor as visualizações (0,4386), quase empatado com o grau
+        (0,4326). A proximidade e a harmônica, as melhores na P1, são as piores aqui.
+  \item \textbf{H1} (núcleo supera o grau na P1): confirmada, 0,7301 contra 0,7033, e também com
+        as outras sementes e com $\beta = 0{,}010$ e $0{,}016$.
+  \item \textbf{H2} ($0 < \tau_b(c, w) < \tau_b(c, \rho)$ para toda $c$): confirmada. O próprio
+        alcance concorda com as visualizações só com $\tau_b = 0{,}3376$: a audiência depende de
+        mais coisas que a posição na rede de amizades.
+\end{itemize}
 
 \subsection{Limitações e pendências}
 \begin{itemize}[leftmargin=*]
@@ -98,4 +140,14 @@ o k-core prevê os espalhadores melhor que o grau?}
     em \codigo{aplicacao/influencia.py}, com 37 testes em \codigo{tests/test\_influencia.py}.}
   \registro{2026-11-19}{poder de espalhamento na Twitch PT: \codigo{aplicacao/experimento.py} grava
     o alcance de cada streamer em \codigo{aplicacao/resultados/alcance\_twitch.csv}; mais 6 testes.}
+  \registro{2026-11-20}{$\tau_b$ de Kendall (Knight, $O(n \log n)$) e \codigo{comparar\_rankings};
+    o experimento compara as 6 centralidades com o alcance e com as visualizações e grava
+    \codigo{concordancia\_twitch.csv}; 58 testes no total.}
+  \registro{2026-11-21}{integração com a interface: a tela de influenciadores usa
+    \codigo{evolucao\_sir} (curvas e cores do mapa) e \codigo{poder\_de\_espalhamento} (alcance
+    do ranking), com $\gamma = 1$, 100 rodadas e $\beta = 1{,}5\,\beta_c$ da rede ativa (0,012 na
+    Twitch PT); a ``correlação de Pearson'' da tela, que tinha piso fixo (0,65) e valores fixos
+    sem dados, virou o $\tau_b$ do grau, do núcleo e do PageRank contra o alcance e, na Twitch,
+    contra as visualizações (com $\approx$ quando há amostra, em redes com mais de 2.000 nós);
+    o pedido com $\beta$ ou $\gamma$ inválido é recusado sem mudar a sessão; 66 testes.}
 \end{description}

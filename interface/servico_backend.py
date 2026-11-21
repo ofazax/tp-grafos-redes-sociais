@@ -21,6 +21,13 @@ from interface.tema import (
     CORES_COMUNIDADES,
     PALETA,
 )
+from redes.aplicacao.influencia import (
+    beta_recomendado,
+    evolucao_sir,
+    limiar_epidemico,
+    poder_de_espalhamento,
+    tau_de_kendall,
+)
 from redes.geradores.modelos import barabasi_albert, erdos_renyi, watts_strogatz
 from redes.leitores.bases import (
     RAIZ,
@@ -48,7 +55,6 @@ from redes.metricas.grau import (
 from redes.metricas.nucleo_k import numero_de_nucleo
 from redes.metricas.proximidade import harmonica, proximidade
 from redes.nucleo.grafo import Grafo, No
-from redes.nucleo.indexador import para_listas_indexadas
 from redes.visualizacao.posicionamento import fruchterman_reingold
 
 # ---------------------------------------------------------------------------
@@ -346,13 +352,17 @@ def calcular_nmi_e_ari(
 def simular_sir_monte_carlo(
     g: Grafo,
     semente_no: No,
-    beta: float = 0.08,
-    gamma: float = 0.02,
-    simulacoes: int = 30,
+    beta: float,
+    gamma: float = 1.0,
+    simulacoes: int = 100,
     semente_aleatoria: int = 42,
-    passos_max: int = 20,
 ) -> dict[str, Any]:
-    """Executa simulação epidemiológica SIR em tempo discreto usando `para_listas_indexadas(g)`."""
+    """SIR da tela de influenciadores, pelo `evolucao_sir` da Frente 5 (`redes.aplicacao`).
+
+    Devolve o alcance médio, as curvas S(t), I(t) e R(t) na média das rodadas e o estado de
+    cada nó no pico da primeira rodada, com a semente marcada como "SEED". As rodadas vão até
+    não sobrar infectado, como na descrição do problema.
+    """
     n = g.numero_de_nos()
     if n == 0 or semente_no not in g:
         return {
@@ -363,107 +373,147 @@ def simular_sir_monte_carlo(
             "estados_snapshot": {},
         }
 
-    chave_sir = (
-        id(g),
-        n,
-        g.numero_de_arestas(),
-        semente_no,
-        round(beta, 4),
-        round(gamma, 4),
-        int(simulacoes),
-        int(semente_aleatoria),
-    )
+    chave_sir = (id(g), n, g.numero_de_arestas(), semente_no, beta, gamma, int(simulacoes), int(semente_aleatoria))
     if chave_sir in _CACHE_SIR:
         return _CACHE_SIR[chave_sir]
 
-    indexador, adj = para_listas_indexadas(g)
-    idx_semente = indexador.para_indice[semente_no]
-
-    limite_runs = 12 if n > 1000 else 30
-    runs = max(1, min(int(simulacoes), limite_runs))
-    soma_s = [0.0] * (passos_max + 1)
-    soma_i = [0.0] * (passos_max + 1)
-    soma_r = [0.0] * (passos_max + 1)
-    alcances: list[float] = []
-    estados_snapshot: dict[No, str] = {}
-
-    for r_idx in range(runs):
-        rng = random.Random(semente_aleatoria + r_idx * 97)
-        estado = [0] * n
-        estado[idx_semente] = 1
-        infectados = [idx_semente]
-        qtd_rec = 0
-
-        soma_s[0] += (n - 1) / n
-        soma_i[0] += 1.0 / n
-        soma_r[0] += 0.0
-
-        for t in range(1, passos_max + 1):
-            if not infectados:
-                soma_s[t] += (n - qtd_rec) / n
-                soma_i[t] += 0.0
-                soma_r[t] += qtd_rec / n
-                continue
-
-            proximos_inf: list[int] = []
-            for u in infectados:
-                for w in adj[u]:
-                    if estado[w] == 0 and rng.random() < beta:
-                        estado[w] = 1
-                        proximos_inf.append(w)
-                if rng.random() < gamma:
-                    estado[u] = 2
-                    qtd_rec += 1
-                else:
-                    proximos_inf.append(u)
-
-            infectados = proximos_inf
-            qtd_inf = len(infectados)
-
-            if r_idx == 0 and t == max(2, passos_max // 4):
-                para_no = indexador.para_no
-                estados_snapshot = {
-                    para_no[i]: (
-                        "SEED"
-                        if i == idx_semente
-                        else ("I" if estado[i] == 1 else ("R" if estado[i] == 2 else "S"))
-                    )
-                    for i in range(n)
-                }
-
-            soma_s[t] += (n - qtd_inf - qtd_rec) / n
-            soma_i[t] += qtd_inf / n
-            soma_r[t] += qtd_rec / n
-
-        alcances.append((len(infectados) + qtd_rec) / n)
-
-    if not estados_snapshot:
-        estados_snapshot = {v: ("SEED" if v == semente_no else "S") for v in g.nos()}
-
+    evolucao = evolucao_sir(
+        g, semente_no, beta, gamma=gamma, rodadas=max(1, int(simulacoes)), semente=semente_aleatoria
+    )
+    estados = dict(evolucao["estados"])
+    estados[semente_no] = "SEED"
     res = {
-        "alcance_medio": sum(alcances) / len(alcances),
-        "curva_s": [soma_s[t] / runs for t in range(passos_max + 1)],
-        "curva_i": [soma_i[t] / runs for t in range(passos_max + 1)],
-        "curva_r": [soma_r[t] / runs for t in range(passos_max + 1)],
-        "estados_snapshot": estados_snapshot,
+        "alcance_medio": evolucao["alcance"],
+        "curva_s": evolucao["curva_s"],
+        "curva_i": evolucao["curva_i"],
+        "curva_r": evolucao["curva_r"],
+        "estados_snapshot": estados,
     }
     _CACHE_SIR[chave_sir] = res
     return res
 
 
-def correlacao_pearson(xs: list[float], ys: list[float]) -> float:
-    """Calcula o coeficiente de correlação de Pearson r entre duas séries."""
-    n = min(len(xs), len(ys))
+# Concordância exibida na tela: tau-b de Kendall (Frente 5) entre o alcance no SIR e as
+# centralidades que a análise calcula para todos os nós (grau, núcleo e PageRank). As 6
+# centralidades completas estão no experimento da Frente 5 (python -m redes.aplicacao.experimento).
+# O alcance usa as mesmas rodadas da tela (100 por padrão, como no experimento): com poucas
+# rodadas, o sorteio deixa o alcance ruidoso e o tau sai menor do que é.
+MAX_ORIGENS_CONCORDANCIA = 2000
+AMOSTRA_ORIGENS_CONCORDANCIA = 300
+# Nas redes amostradas, os candidatos ao ranking por alcance incluem os primeiros de cada centralidade.
+CANDIDATOS_POR_CENTRALIDADE = 30
+
+
+def alcance_da_tela(
+    g: Grafo, beta: float, gamma: float, semente: int, rodadas: int
+) -> tuple[dict[No, float], bool]:
+    """Alcance no SIR (`poder_de_espalhamento`) de todos os nós, ou de uma amostra nas redes grandes.
+
+    Devolve (alcance, amostrado). Com mais de MAX_ORIGENS_CONCORDANCIA nós, só
+    AMOSTRA_ORIGENS_CONCORDANCIA origens sorteadas (com a semente) são simuladas. Fica em cache
+    por rede e parâmetros, e serve ao tau do rodapé e ao ranking da tela.
+    """
+    n = g.numero_de_nos()
+    chave = (id(g), n, g.numero_de_arestas(), beta, gamma, semente, rodadas, "alcance")
+    if chave in _CACHE_SIR:
+        return _CACHE_SIR[chave]
+
+    amostrado = n > MAX_ORIGENS_CONCORDANCIA
+    origens = None
+    if amostrado:
+        origens = random.Random(semente).sample(list(g.nos()), AMOSTRA_ORIGENS_CONCORDANCIA)
+    alcance = poder_de_espalhamento(
+        g, beta, gamma=gamma, rodadas=max(1, rodadas), semente=semente, origens=origens
+    )
+    _CACHE_SIR[chave] = (alcance, amostrado)
+    return alcance, amostrado
+
+
+def ranking_por_alcance(
+    g: Grafo,
+    analise: dict[str, Any],
+    beta: float,
+    gamma: float,
+    semente: int,
+    rodadas: int,
+    k: int = 5,
+) -> tuple[list[No], dict[No, float]]:
+    """Os k nós de maior alcance no SIR, com empates desfeitos pelo grau e depois pelo nó.
+
+    É a mesma regra do experimento da Frente 5. Nas redes amostradas, os candidatos são a
+    amostra mais os CANDIDATOS_POR_CENTRALIDADE primeiros do grau, do núcleo e do PageRank; os
+    que ainda não têm alcance são simulados com os mesmos parâmetros. Devolve (top k, alcance).
+    """
+    if g.numero_de_nos() == 0:
+        return [], {}
+    alcance, amostrado = alcance_da_tela(g, beta, gamma, semente, rodadas)
+    if amostrado:
+        alcance = dict(alcance)
+        candidatos: set[No] = set()
+        for valores in (analise["centralidade_grau"], analise["kcore"], analise["pagerank"]):
+            candidatos.update(sorted(valores, key=valores.get, reverse=True)[:CANDIDATOS_POR_CENTRALIDADE])
+        faltantes = [v for v in candidatos if v not in alcance]
+        if faltantes:
+            alcance.update(
+                poder_de_espalhamento(
+                    g, beta, gamma=gamma, rodadas=max(1, rodadas), semente=semente, origens=faltantes
+                )
+            )
+    # Desempate pelo nó: números em ordem numérica, como no experimento (nomes depois, em ordem alfabética).
+    def chave(v: No) -> tuple:
+        no = (0, v, "") if isinstance(v, (int, float)) else (1, 0, str(v))
+        return (-alcance[v], -g.grau(v), no)
+
+    ordem = sorted(alcance, key=chave)
+    return ordem[:k], alcance
+
+
+def concordancia_sir_da_tela(
+    g: Grafo,
+    analise: dict[str, Any],
+    beta: float,
+    gamma: float,
+    semente: int,
+    rodadas: int,
+    atributos: dict[No, dict] | None = None,
+) -> str:
+    """Texto com o tau-b do grau, do núcleo e do PageRank contra o alcance (e, na Twitch PT,
+    contra as visualizações reais).
+
+    O alcance vem de `alcance_da_tela`: em redes com mais de MAX_ORIGENS_CONCORDANCIA nós, é o de
+    uma amostra de origens, e os valores aparecem com "≈". Fica em cache por rede e parâmetros.
+    """
+    n = g.numero_de_nos()
     if n < 2:
-        return 0.0
-    mx = sum(xs[:n]) / n
-    my = sum(ys[:n]) / n
-    num = sum((xs[i] - mx) * (ys[i] - my) for i in range(n))
-    den_x = math.sqrt(sum((xs[i] - mx) ** 2 for i in range(n)))
-    den_y = math.sqrt(sum((ys[i] - my) ** 2 for i in range(n)))
-    if den_x < 1e-12 or den_y < 1e-12:
-        return 0.0
-    return max(-1.0, min(1.0, num / (den_x * den_y)))
+        return "Concordância (τ de Kendall): rede pequena demais"
+
+    chave = (id(g), n, g.numero_de_arestas(), beta, gamma, semente, rodadas, "concordancia")
+    if chave in _CACHE_SIR:
+        return _CACHE_SIR[chave]
+
+    alcance, amostrado = alcance_da_tela(g, beta, gamma, semente, rodadas)
+
+    centralidades = [
+        ("Grau", analise["centralidade_grau"]),
+        ("k-Core", analise["kcore"]),
+        ("PageRank", analise["pagerank"]),
+    ]
+    aprox = "≈" if amostrado else "="
+
+    def formatar(tau: float) -> str:
+        return "—" if math.isnan(tau) else formatar_float_br(tau, 2)
+
+    partes = [f"{nome} τ{aprox}{formatar(tau_de_kendall(valores, alcance))}" for nome, valores in centralidades]
+    texto = "τ de Kendall com o alcance SIR: " + " • ".join(partes)
+
+    if atributos:
+        visualizacoes = {v: dados["visualizacoes"] for v, dados in atributos.items() if "visualizacoes" in dados}
+        if visualizacoes:
+            partes_w = [f"{nome} τ={formatar(tau_de_kendall(valores, visualizacoes))}" for nome, valores in centralidades]
+            texto += " | com as visualizações reais: " + " • ".join(partes_w)
+
+    _CACHE_SIR[chave] = texto
+    return texto
 
 
 # ---------------------------------------------------------------------------
@@ -1278,11 +1328,17 @@ class GerenciadorSessaoBackend:
         self.iteracoes_layout = 50
         self.algoritmo_comunidade = "Louvain"
         self.semente_comunidade = 42
-        self.sir_beta = 0.08
-        self.sir_gamma = 0.02
-        self.sir_simulacoes = 30
-        self.sir_seed = 42
+        # Parâmetros do SIR da Frente 5: gamma = 1 (cada infectado tenta transmitir uma vez),
+        # 100 rodadas e beta = 1,5 x limiar epidêmico da rede ativa (0,012 na Twitch PT),
+        # recalculado a cada troca de rede em _ajustar_beta_sir.
+        self.sir_beta = 0.012
+        self.sir_beta_c: float | None = None
+        self.sir_gamma = 1.0
+        self.sir_simulacoes = 100
+        self.sir_seed = 2026  # a mesma semente do experimento: na Twitch PT, o ranking é o do relatório
         self.sir_semente_no: No | None = None
+        # True enquanto o usuário não escolheu a semente: aí ela é o nó de maior alcance.
+        self.sir_semente_automatica = True
         self.caminho_algoritmo = "Dijkstra"
         self.caminho_origem: No | None = None
         self.caminho_destino: No | None = None
@@ -1299,8 +1355,28 @@ class GerenciadorSessaoBackend:
         except FileNotFoundError:
             self.ativar_base_homologada("karate", direcionado=False, ponderado=False)
 
+    def _ajustar_beta_sir(self, g: Grafo) -> None:
+        """Põe o beta do SIR em 1,5 x limiar epidêmico da rede nova, com 3 casas (0,012 na Twitch PT).
+
+        No grafo direcionado o limiar não está definido; ele é calculado sobre a mesma rede sem
+        a direção das arestas.
+        """
+        if g.direcionado:
+            # O limiar só está definido sem direção: usa a mesma rede, sem a direção das arestas.
+            nao_direcionado = Grafo.de_arestas((v, w) for v, w, _ in g.arestas())
+            for v in g.nos():
+                nao_direcionado.adicionar_no(v)
+            g = nao_direcionado
+        try:
+            self.sir_beta_c = limiar_epidemico(g)
+            self.sir_beta = round(beta_recomendado(g), 3)
+        except ValueError:
+            self.sir_beta_c = None
+
     def _definir_endpoints_padrao(self, g: Grafo, nos_ordenados: list[No]) -> None:
         """Escolhe dois nós reais conectados a pelo menos 2 saltos de distância como rota inicial."""
+        self._ajustar_beta_sir(g)
+        self.sir_semente_automatica = True
         if not nos_ordenados:
             self.caminho_origem = None
             self.caminho_destino = None
@@ -1523,47 +1599,34 @@ class GerenciadorSessaoBackend:
                 }
             )
 
-        # 4. Top 5 Influenciadores + Simulação SIR Real
+        # 4. Top 5 Influenciadores: os de maior alcance no SIR (poder_de_espalhamento, Frente 5)
         top_influenciadores: list[dict[str, Any]] = []
-        prs_top: list[float] = []
-        kcores_top: list[float] = []
-        graus_top: list[float] = []
-        alcances_top: list[float] = []
+        top_sir, alcance_top = ranking_por_alcance(
+            g, analise, self.sir_beta, self.sir_gamma, self.sir_seed, self.sir_simulacoes
+        )
 
-        for idx, v in enumerate(top_nos):
-            res_sir_v = simular_sir_monte_carlo(
-                g,
-                semente_no=v,
-                beta=self.sir_beta,
-                gamma=self.sir_gamma,
-                simulacoes=min(self.sir_simulacoes, 20),
-                semente_aleatoria=self.sir_seed + idx * 13,
-            )
-            alc_pct = res_sir_v["alcance_medio"] * 100.0
-            prs_top.append(float(analise["pagerank"].get(v, 0.0)))
-            kcores_top.append(float(analise["kcore"].get(v, 0)))
-            graus_top.append(float(g.grau(v)))
-            alcances_top.append(alc_pct)
-
+        for idx, v in enumerate(top_sir):
+            alc_pct = alcance_top[v] * 100.0
             rot_v = formatar_rotulo_no(v)
             top_influenciadores.append(
                 {
                     "rank": f"#{idx + 1}",
                     "id": str(v),
                     "rotulo_curto": rot_v,
-                    "vertice": f"{rot_v} (Hub)" if idx == 0 else rot_v,
+                    "vertice": rot_v,
                     "grau": g.grau(v),
                     "pagerank": f"{analise['pagerank'].get(v, 0.0):.4f}",
                     "kcore": int(analise["kcore"].get(v, 0)),
                     "alcance": f"{alc_pct:.1f}%".replace(".", ","),
-                    "alcance_num": round(res_sir_v["alcance_medio"], 4),
+                    "alcance_num": round(alcance_top[v], 4),
                 }
             )
 
-        # Simulação SIR detalhada para a semente ativa
+        # Simulação SIR detalhada para a semente ativa. Ao abrir uma rede, a semente é o nó de
+        # maior alcance (o 1º do ranking); depois, vale a que o usuário escolher.
         semente_sir = resolver_no_no_grafo(g, self.sir_semente_no)
-        if semente_sir is None and top_nos:
-            semente_sir = top_nos[0]
+        if (semente_sir is None or self.sir_semente_automatica) and top_sir:
+            semente_sir = top_sir[0]
         self.sir_semente_no = semente_sir
 
         sir_detalhe = (
@@ -1597,14 +1660,20 @@ class GerenciadorSessaoBackend:
         cont_rec = sum(1 for v in g.nos() if estados_snap.get(v) == "R")
         cont_sus = max(0, g.numero_de_nos() - cont_inf - cont_rec)
 
-        r_pr = max(0.65, abs(correlacao_pearson(prs_top, alcances_top))) if len(prs_top) >= 2 else 0.91
-        r_kc = max(0.60, abs(correlacao_pearson(kcores_top, alcances_top))) if len(kcores_top) >= 2 else 0.89
-        r_gr = max(0.55, abs(correlacao_pearson(graus_top, alcances_top))) if len(graus_top) >= 2 else 0.84
+        concordancia_str = concordancia_sir_da_tela(
+            g,
+            analise,
+            self.sir_beta,
+            self.sir_gamma,
+            self.sir_seed,
+            self.sir_simulacoes,
+            atributos=self.meta_ativa.get("atributos_nos"),
+        )
 
         # 5. Tabela Ranking Consolidado (Página 6)
         ranking_consolidado: list[dict[str, str]] = []
         for idx, item_inf in enumerate(top_influenciadores[:5]):
-            no_real = top_nos[idx]
+            no_real = top_sir[idx]
             c_idx = mapa_cluster_visual.get(no_real, 0)
             ranking_consolidado.append(
                 {
@@ -1721,10 +1790,13 @@ class GerenciadorSessaoBackend:
                 "curva_s": [round(x, 4) for x in sir_detalhe["curva_s"]],
                 "curva_i": [round(x, 4) for x in sir_detalhe["curva_i"]],
                 "curva_r": [round(x, 4) for x in sir_detalhe["curva_r"]],
-                "correlacao_str": (
-                    f"Correlação de Pearson: PageRank (r={formatar_float_br(r_pr, 2)}) • "
-                    f"k-Core (r={formatar_float_br(r_kc, 2)}) • "
-                    f"Grau (r={formatar_float_br(r_gr, 2)})"
+                "correlacao_str": concordancia_str,
+                "limiar": self.sir_beta_c,
+                "limiar_str": (
+                    f"β_c = {formatar_float_br(self.sir_beta_c, 4)}"
+                    + (" (sem a direção das arestas)" if g.direcionado else "")
+                    if self.sir_beta_c is not None and math.isfinite(self.sir_beta_c)
+                    else "β_c infinito: nenhum nó tem 2 ou mais vizinhos, e o surto não cresce"
                 ),
                 "top_influenciadores": top_influenciadores,
             },
@@ -1853,14 +1925,25 @@ class _ManipuladorRequisicoesBackend(BaseHTTPRequestHandler):
                     return
 
                 if acao == "simular_sir":
-                    sessao.sir_beta = float(req.get("beta", sessao.sir_beta))
-                    sessao.sir_gamma = float(req.get("gamma", sessao.sir_gamma))
-                    sessao.sir_simulacoes = int(req.get("simulacoes", sessao.sir_simulacoes))
+                    beta = float(req.get("beta", sessao.sir_beta))
+                    gamma = float(req.get("gamma", sessao.sir_gamma))
+                    simulacoes = int(req.get("simulacoes", sessao.sir_simulacoes))
+                    # Valida antes de gravar: um valor inválido na sessão quebraria os próximos pedidos.
+                    if not 0.0 <= beta <= 1.0 or not 0.0 < gamma <= 1.0 or simulacoes < 1:
+                        self._enviar_json(
+                            400,
+                            {"ok": False, "erro": "Use 0 ≤ β ≤ 1, 0 < γ ≤ 1 e pelo menos 1 simulação."},
+                        )
+                        return
+                    sessao.sir_beta = beta
+                    sessao.sir_gamma = gamma
+                    sessao.sir_simulacoes = simulacoes
                     sessao.sir_seed = int(req.get("semente", sessao.sir_seed))
                     if "no_semente" in req and req["no_semente"] is not None:
                         sessao.sir_semente_no = resolver_no_no_grafo(
                             sessao.grafo_ativo, req["no_semente"]
                         )
+                        sessao.sir_semente_automatica = False
                     dados = sessao.obter_payload_completo()
                     self._enviar_json(200, {"ok": True, "dados": dados})
                     return
