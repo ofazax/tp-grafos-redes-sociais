@@ -1,7 +1,8 @@
-"""Testes do limiar epidêmico, da simulação SIR e da tabela de alcance: casos de resposta
-conhecida, valores esperados calculados à mão, Karate Club, invariantes e Twitch PT."""
+"""Testes do limiar epidêmico, da simulação SIR, do tau de Kendall e das tabelas do experimento:
+casos de resposta conhecida, valores esperados calculados à mão, Karate Club, invariantes e Twitch PT."""
 
 import csv
+import itertools
 import math
 from pathlib import Path
 
@@ -9,10 +10,27 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from redes.aplicacao.experimento import COLUNAS, salvar_csv, tabela_de_alcance
-from redes.aplicacao.influencia import limiar_epidemico, poder_de_espalhamento, simular_sir
+from redes.aplicacao.experimento import (
+    CENTRALIDADES,
+    COLUNAS,
+    COLUNAS_CONCORDANCIA,
+    centralidades_da_rede,
+    salvar_concordancia_csv,
+    salvar_csv,
+    tabela_de_alcance,
+    tabela_de_concordancia,
+)
+from redes.aplicacao.influencia import (
+    comparar_rankings,
+    limiar_epidemico,
+    poder_de_espalhamento,
+    simular_sir,
+    tau_de_kendall,
+)
 from redes.leitores import RAIZ, carregar_twitch_ptbr
 from redes.metricas.caminhos import componentes_conexas
+from redes.metricas.grau import centralidade_de_grau
+from redes.metricas.nucleo_k import numero_de_nucleo
 from redes.nucleo import Grafo
 
 ARQUIVO_KARATE = Path(__file__).parent / "dados" / "karate_arestas.txt"
@@ -48,6 +66,32 @@ def caminho(n):
 
 def ciclo(n):
     return Grafo.de_arestas((i, (i + 1) % n) for i in range(n))
+
+
+def valores(*lista):
+    # Dicionário nó -> valor, com os nós 0, 1, 2, ... na ordem da lista.
+    return dict(enumerate(lista))
+
+
+def tau_b_ingenuo(x, y):
+    # Definição direta, comparando os n(n-1)/2 pares: serve de referência para o tau_de_kendall.
+    concordantes = discordantes = so_em_x = so_em_y = 0
+    for a, b in itertools.combinations([v for v in x if v in y], 2):
+        dx = (x[a] > x[b]) - (x[a] < x[b])
+        dy = (y[a] > y[b]) - (y[a] < y[b])
+        if dx == 0 and dy == 0:
+            continue
+        if dx == 0:
+            so_em_x += 1
+        elif dy == 0:
+            so_em_y += 1
+        elif dx == dy:
+            concordantes += 1
+        else:
+            discordantes += 1
+    total = concordantes + discordantes
+    denominador = math.sqrt((total + so_em_x) * (total + so_em_y))
+    return (concordantes - discordantes) / denominador if denominador else math.nan
 
 
 # Limiar epidêmico: beta_c = <k> / (<k²> - <k>)
@@ -220,6 +264,81 @@ def test_alcance_origem_fora_do_grafo():
         poder_de_espalhamento(completo(3), 0.5, origens=[99])
 
 
+# Tau-b de Kendall
+
+
+def test_tau_rankings_iguais():
+    assert tau_de_kendall(valores(1, 2, 3, 4, 5), valores(10, 20, 30, 40, 50)) == pytest.approx(1.0)
+
+
+def test_tau_rankings_invertidos():
+    assert tau_de_kendall(valores(1, 2, 3, 4, 5), valores(50, 40, 30, 20, 10)) == pytest.approx(-1.0)
+
+
+def test_tau_com_empate():
+    # Pares: 5 concordantes, nenhum discordante e 1 empatado só em x (nós 1 e 2).
+    # tau_b = 5 / sqrt((5 + 1) * (5 + 0)) = 5 / sqrt(30).
+    assert tau_de_kendall(valores(1, 2, 2, 3), valores(1, 2, 3, 4)) == pytest.approx(5 / math.sqrt(30))
+
+
+def test_tau_empate_dos_dois_lados_nao_conta():
+    # Os nós 0 e 1 empatam em x e em y: o par sai das contas, e o resto está na mesma ordem.
+    assert tau_de_kendall(valores(1, 1, 2), valores(5, 5, 9)) == pytest.approx(1.0)
+
+
+def test_tau_exemplo_da_documentacao_do_scipy():
+    # Exemplo de scipy.stats.kendalltau (tau-b), com empates nos dois lados.
+    assert tau_de_kendall(valores(12, 2, 1, 12, 2), valores(1, 4, 7, 1, 0)) == pytest.approx(-0.47140452079103173)
+
+
+def test_tau_so_olha_a_ordem():
+    # Trocar os valores por outros na mesma ordem (aqui, ao cubo) não muda o tau.
+    x, y = valores(3, 1, 4, 1, 5, 9, 2), valores(2, 7, 1, 8, 2, 8, 1)
+    assert tau_de_kendall(x, y) == pytest.approx(tau_de_kendall({v: c**3 for v, c in x.items()}, y))
+
+
+def test_tau_usa_so_os_nos_em_comum():
+    assert tau_de_kendall({0: 1, 1: 2, 2: 3, 9: 100}, {0: 1, 1: 2, 2: 3, 8: -5}) == pytest.approx(1.0)
+
+
+def test_tau_sem_ordem_e_nan():
+    # Todos iguais em x: não há ordem para comparar.
+    assert math.isnan(tau_de_kendall(valores(7, 7, 7), valores(1, 2, 3)))
+
+
+def test_tau_menos_de_dois_nos_e_nan():
+    assert math.isnan(tau_de_kendall({0: 1}, {0: 1}))
+    assert math.isnan(tau_de_kendall({}, {}))
+
+
+@settings(max_examples=200, deadline=None)
+@given(
+    st.lists(st.tuples(st.integers(0, 4), st.integers(0, 4)), min_size=2, max_size=30)
+)
+def test_tau_igual_a_definicao_direta(pares):
+    # Valores de 0 a 4 em até 30 nós: muitos empates, o caso difícil do tau-b.
+    x = {i: a for i, (a, _) in enumerate(pares)}
+    y = {i: b for i, (_, b) in enumerate(pares)}
+    esperado = tau_b_ingenuo(x, y)
+    obtido = tau_de_kendall(x, y)
+    if math.isnan(esperado):
+        assert math.isnan(obtido)
+    else:
+        assert obtido == pytest.approx(esperado)
+        assert obtido == pytest.approx(tau_de_kendall(y, x))  # simétrico
+        assert -1.0 <= obtido <= 1.0
+
+
+def test_comparar_rankings():
+    x = valores(1, 2, 3, 4)
+    tabela = comparar_rankings({"a": x, "b": valores(4, 3, 2, 1)}, {"r": x, "s": valores(1, 2, 2, 3)})
+    assert set(tabela) == {"a", "b"}
+    assert tabela["a"]["r"] == pytest.approx(1.0)
+    assert tabela["b"]["r"] == pytest.approx(-1.0)
+    assert tabela["a"]["s"] == pytest.approx(5 / math.sqrt(30))
+    assert tabela["b"]["s"] == pytest.approx(-5 / math.sqrt(30))
+
+
 # Karate Club
 
 
@@ -324,6 +443,35 @@ def test_salvar_csv(tmp_path):
     assert lidas[0]["no"] == "0" and lidas[0]["alcance"] == "1.000000" and lidas[0]["visualizacoes"] == "7"
 
 
+# Tabela de concordância (experimento.py)
+
+
+def test_centralidades_da_rede_tem_as_seis():
+    c = centralidades_da_rede(carregar_karate())
+    assert list(c) == ["grau", "proximidade", "harmonica", "intermediacao", "pagerank", "nucleo"]
+    assert list(c) == list(CENTRALIDADES)
+    assert all(len(valores_por_no) == 34 for valores_por_no in c.values())
+
+
+def test_tabela_de_concordancia():
+    x = valores(1, 2, 3, 4)
+    linhas = tabela_de_concordancia({"a": x, "b": valores(4, 3, 2, 1)}, alcance=x, visualizacoes=valores(1, 2, 2, 3))
+    assert [linha["centralidade"] for linha in linhas] == ["a", "b"]
+    assert linhas[0]["tau_alcance"] == pytest.approx(1.0)
+    assert linhas[1]["tau_alcance"] == pytest.approx(-1.0)
+    assert linhas[0]["tau_visualizacoes"] == pytest.approx(5 / math.sqrt(30))
+
+
+def test_salvar_concordancia_csv(tmp_path):
+    linhas = [{"centralidade": "grau", "tau_alcance": 0.70331, "tau_visualizacoes": 0.43256}]
+    caminho = tmp_path / "concordancia.csv"
+    salvar_concordancia_csv(linhas, caminho)
+    with open(caminho, encoding="utf-8", newline="") as arquivo:
+        lidas = list(csv.DictReader(arquivo))
+    assert list(lidas[0]) == COLUNAS_CONCORDANCIA
+    assert lidas == [{"centralidade": "grau", "tau_alcance": "0.7033", "tau_visualizacoes": "0.4326"}]
+
+
 # Twitch PT: valor da descrição do problema (Etapa 1)
 
 
@@ -351,3 +499,12 @@ def test_twitch_tabela_de_alcance():
     assert len(linhas) == 1912
     assert all(linha["visualizacoes"] != "" for linha in linhas)
     assert max(linha["nucleo"] for linha in linhas) == 37
+
+
+@precisa_twitch
+def test_twitch_tau_com_as_visualizacoes():
+    # Valores de referência das notas da Frente 5 (calculados com o NetworkX): grau ≈ 0,43 e núcleo ≈ 0,40.
+    g, atributos = carregar_twitch_ptbr()
+    visualizacoes = {v: dados["visualizacoes"] for v, dados in atributos.items()}
+    assert tau_de_kendall(centralidade_de_grau(g), visualizacoes) == pytest.approx(0.4326, abs=1e-4)
+    assert tau_de_kendall(numero_de_nucleo(g), visualizacoes) == pytest.approx(0.4034, abs=1e-4)

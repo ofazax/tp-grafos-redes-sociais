@@ -195,3 +195,100 @@ def poder_de_espalhamento(
             total += len(_rodada_sir(adj, [i], beta, gamma, rng, estado))
         resultado[v] = total / (rodadas * n)
     return resultado
+
+
+def _pares_empatados(valores: list[float]) -> int:
+    """Quantos pares têm o mesmo valor numa lista já ordenada: soma de t(t-1)/2 por grupo."""
+    total = 0
+    inicio = 0
+    for i in range(1, len(valores) + 1):
+        if i == len(valores) or valores[i] != valores[inicio]:
+            t = i - inicio
+            total += t * (t - 1) // 2
+            inicio = i
+    return total
+
+
+def _ordenar_contando_inversoes(valores: list[float]) -> tuple[list[float], int]:
+    """Merge sort que conta as inversões: pares i < j com valores[i] > valores[j] (iguais não contam)."""
+    if len(valores) <= 1:
+        return valores, 0
+    meio = len(valores) // 2
+    esquerda, inv_esquerda = _ordenar_contando_inversoes(valores[:meio])
+    direita, inv_direita = _ordenar_contando_inversoes(valores[meio:])
+
+    juntos: list[float] = []
+    inversoes = inv_esquerda + inv_direita
+    i = j = 0
+    while i < len(esquerda) and j < len(direita):
+        if direita[j] < esquerda[i]:
+            # direita[j] é menor que todos os que sobraram na esquerda: cada um é uma inversão.
+            inversoes += len(esquerda) - i
+            juntos.append(direita[j])
+            j += 1
+        else:
+            juntos.append(esquerda[i])
+            i += 1
+    juntos.extend(esquerda[i:])
+    juntos.extend(direita[j:])
+    return juntos, inversoes
+
+
+def tau_de_kendall(x: dict[No, float], y: dict[No, float]) -> float:
+    """Tau-b de Kendall: concordância entre a ordem dos nós em x e em y, de -1 a 1.
+
+    Um par de nós é concordante quando x e y o ordenam do mesmo jeito, e discordante quando o
+    ordenam ao contrário. Com P concordantes, Q discordantes e n0 = n(n-1)/2 pares,
+    tau_b = (P - Q) / sqrt((n0 - n1)(n0 - n2)), em que n1 e n2 contam os pares empatados em x
+    e em y. Dá 1 quando as ordens são iguais, -1 quando são invertidas e perto de 0 quando
+    não têm relação. Só a ordem importa, não os valores: dá para comparar medidas em escalas
+    diferentes. O desconto dos empates (variante b) é o que permite comparar o número de
+    núcleo, que tem poucos valores distintos.
+
+    Usa os nós presentes nos dois dicionários. Devolve NaN se sobrar menos de 2 nós, ou se
+    todos os valores de x (ou de y) forem iguais, porque aí não há ordem para comparar.
+
+    Algoritmo de Knight: ordena os pares (x, y), conta os empates e conta as discordâncias como
+    inversões de y num merge sort, sem comparar os n0 pares um a um.
+    Tempo: O(n log n). Espaço: O(n).
+    Referência: Kendall (1938), "A new measure of rank correlation"; Kendall (1945), "The
+    treatment of ties in ranking problems"; Knight (1966), "A computer method for calculating
+    Kendall's tau with ungrouped data" (o algoritmo, sem empates); Christensen (2005), "Fast
+    algorithms for the calculation of Kendall's tau" (a versão com empates, usada aqui).
+    """
+    pares = sorted((x[v], y[v]) for v in x if v in y)
+    n = len(pares)
+    if n < 2:
+        return math.nan
+
+    n0 = n * (n - 1) // 2
+    # Empates em x, e empates em x e y ao mesmo tempo (os pares iguais ficam vizinhos).
+    n1 = _pares_empatados([a for a, _ in pares])
+    n3 = _pares_empatados(pares)  # type: ignore[arg-type]
+    # Com os pares ordenados por (x, y), um par discordante é uma inversão de y.
+    ys_ordenados, discordantes = _ordenar_contando_inversoes([b for _, b in pares])
+    n2 = _pares_empatados(ys_ordenados)
+
+    denominador = math.sqrt((n0 - n1) * (n0 - n2))
+    if denominador == 0:
+        return math.nan
+    # P - Q = (pares sem empate em x nem em y) - 2Q = n0 - n1 - n2 + n3 - 2Q.
+    return (n0 - n1 - n2 + n3 - 2 * discordantes) / denominador
+
+
+def comparar_rankings(
+    centralidades: dict[str, dict[No, float]],
+    referencias: dict[str, dict[No, float]],
+) -> dict[str, dict[str, float]]:
+    """Tau-b de cada centralidade contra cada referência: resultado[centralidade][referência].
+
+    Exemplo: comparar_rankings({"grau": ..., "pagerank": ...}, {"alcance": rho, "visualizacoes": w})
+    devolve {"grau": {"alcance": 0,7, "visualizacoes": 0,4}, ...}. A centralidade de maior tau
+    contra o alcance responde à pergunta P1, e a de maior tau contra as visualizações, à P2.
+
+    Tempo: O(c * r * n log n), com c centralidades e r referências. Espaço: O(n).
+    """
+    return {
+        nome: {referencia: tau_de_kendall(valores, alvo) for referencia, alvo in referencias.items()}
+        for nome, valores in centralidades.items()
+    }
