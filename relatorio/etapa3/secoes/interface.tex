@@ -1,7 +1,47 @@
 % =====================================================================
-% Interface --- Kaio (Frente 6)
-% Só o Kaio edita este arquivo. Apague o \pendente quando escrever a seção.
+% Interface --- código do Kaio (Frente 6)
+% Texto final escrito na revisão do relatório, a partir do código de interface/ e
+% de redes/visualizacao/ e dos prints tirados com a Twitch PT.
 % =====================================================================
 \section{Interface}\label{sec:interface}
 
-\pendente{Kaio: como a interface funciona (Streamlit, servidor local e as seis telas), o posicionamento de Fruchterman--Reingold (complexidade e a versão rápida acima de 400 nós) e dois ou três prints das telas em figuras/. Até 1 página.}
+A interface é uma aplicação web local, aberta com \codigo{streamlit run app.py}. O Streamlit exibe
+uma única página (HTML, CSS e JavaScript, em \codigo{interface/web/}), que troca mensagens JSON com
+um pequeno servidor HTTP em Python (\codigo{interface/servico\_backend.py}). Esse servidor chama as
+funções do pacote \codigo{redes} e guarda os resultados em memória, então todo número exibido sai do
+mesmo código testado das seções anteriores. As seis
+telas cobrem os casos de uso da Figura~\ref{fig:uml-comportamento}a: \textbf{obter grafo} (uma das
+quatro bases, um arquivo TXT ou CSV ou um grafo sintético); \textbf{visualizar rede}, com o tamanho
+dos nós dado por uma métrica e o caminho da BFS, da DFS ou do Dijkstra destacado; \textbf{métricas},
+com grau, distâncias, centralidades, agrupamento e o histograma de graus; \textbf{comunidades}
+(Figura~\ref{fig:telas}a); \textbf{influenciadores e SIR}, que simula o espalhamento a partir de um nó
+e mostra as curvas $S$, $I$ e $R$, o ranking e o $\tau_b$ das centralidades (Figura~\ref{fig:telas}b);
+e \textbf{resultados}, que exporta tudo em JSON. Para responder em poucos segundos, a interface estima
+a intermediação (acima de 350 nós) e as distâncias (acima de 400) com 15 origens sorteadas; os
+valores exatos são os das Seções~\ref{sec:caminhos} e~\ref{sec:centralidades}.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{.495\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{tela_comunidades.png}\\[2pt]
+  {\small (a) Comunidades}
+\end{minipage}\hfill
+\begin{minipage}[b]{.495\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{tela_influenciadores.png}\\[2pt]
+  {\small (b) Influenciadores e SIR}
+\end{minipage}
+\caption{Telas da interface com a Twitch PT: (a) as 8 comunidades do Louvain ($Q = 0{,}285$),
+desenhadas em grupos separados; (b) o espalhamento a partir do nó 127, com $\beta = 0{,}012$, e o
+ranking pelo alcance.}
+\label{fig:telas}
+\end{figure}
+
+\paragraph{Desenho da rede.} As posições dos nós vêm do algoritmo de Fruchterman e
+Reingold~\cite{fruchterman1991}: todos os pares de nós se repelem, cada aresta puxa as suas pontas
+como uma mola, e uma ``temperatura'', que esfria a cada iteração, limita o deslocamento
+(\codigo{visualizacao/posicionamento.py}). A repulsão entre todos os pares custa $O(n^2 + m)$ por iteração e só
+é usada até 400 nós; acima disso, cada nó é repelido por 90 nós sorteados, com a força multiplicada
+por $n/90$, em $O(n + m)$ por iteração, e o desenho da Twitch PT leva 0,4\,s. Os testes conferem que
+todo nó recebe uma posição válida e que a mesma semente repete o desenho.
