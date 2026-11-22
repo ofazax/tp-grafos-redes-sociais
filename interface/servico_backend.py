@@ -406,6 +406,7 @@ def simular_sir_monte_carlo(
         g, semente_no, beta, gamma=gamma, rodadas=max(1, int(simulacoes)), semente=semente_aleatoria
     )
     estados = dict(evolucao["estados"])
+    estado_semente = estados.get(semente_no, "S")
     estados[semente_no] = "SEED"
     res = {
         "alcance_medio": evolucao["alcance"],
@@ -413,6 +414,7 @@ def simular_sir_monte_carlo(
         "curva_i": evolucao["curva_i"],
         "curva_r": evolucao["curva_r"],
         "estados_snapshot": estados,
+        "estado_semente": estado_semente,
     }
     _CACHE_SIR[chave_sir] = res
     return res
@@ -1681,8 +1683,9 @@ class GerenciadorSessaoBackend:
                 if no_real_vis == semente_sir
                 else estados_snap.get(no_real_vis, "S")
             )
-        cont_inf = sum(1 for v in g.nos() if estados_snap.get(v) in ("I", "SEED"))
-        cont_rec = sum(1 for v in g.nos() if estados_snap.get(v) == "R")
+        estado_semente = sir_detalhe.get("estado_semente")
+        cont_inf = sum(1 for v in g.nos() if estados_snap.get(v) == "I") + (estado_semente == "I")
+        cont_rec = sum(1 for v in g.nos() if estados_snap.get(v) == "R") + (estado_semente == "R")
         cont_sus = max(0, g.numero_de_nos() - cont_inf - cont_rec)
 
         concordancia_str = concordancia_sir_da_tela(
