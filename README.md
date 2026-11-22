@@ -4,6 +4,8 @@ Ferramenta em Python puro que carrega uma rede social real, calcula grau, centra
 agrupamento e comunidades e mostra os resultados numa interface gráfica.
 Bibliotecas de grafos (NetworkX etc.) só aparecem em `desempenho/`, para comparar desempenho.
 
+Repositório, com o histórico de commits do grupo: https://github.com/ofazax/tp-grafos-redes-sociais
+
 ## Como rodar (Windows, Prompt de Comando)
 
 ```bat
