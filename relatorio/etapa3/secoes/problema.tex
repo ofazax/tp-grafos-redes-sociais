@@ -15,10 +15,11 @@ audiência também depende de fatores que o grafo não registra, como a idade do
 \paragraph{Entrada e saída.} A entrada é o grafo $G = (V, E)$ da Twitch PT (Seção~\ref{sec:bases}),
 com $n = 1.912$ streamers e $m = 31.299$ amizades mútuas, e as visualizações $w(v)$ de cada canal. São
 comparadas seis centralidades $c$: grau, proximidade e harmônica (Seção~\ref{sec:caminhos}),
-intermediação, PageRank e número de núcleo $k_s$ (Seção~\ref{sec:centralidades}). Para cada $c$, a
-saída é o ranking dos streamers por $c$, com os empates desfeitos pelo grau e depois pelo
-identificador do nó, e dois números: $\tau_b(c, \rho)$, a concordância do ranking com o alcance
-$\rho$, que responde à P1, e $\tau_b(c, w)$, a concordância com as visualizações, que responde à P2.
+intermediação, PageRank e número de núcleo $k_s$ (Seção~\ref{sec:centralidades}). A saída é o
+ranking dos streamers pelo alcance $\rho$, com os empates desfeitos pelo grau e depois pelo
+identificador do nó, e, para cada $c$, dois números: $\tau_b(c, \rho)$, a concordância do ranking de
+$c$ com o alcance, que responde à P1, e $\tau_b(c, w)$, a concordância com as visualizações, que
+responde à P2.
 
 \paragraph{Como validar.} O alcance $\rho(v)$ é a fração média da rede atingida por uma simulação SIR
 em tempo discreto que começa só em $v$, repetida $M = 100$ vezes: a cada passo, cada infectado
