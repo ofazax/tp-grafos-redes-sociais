@@ -8,7 +8,7 @@ Da raiz do projeto, com a Twitch PT em `dados/brutos/twitch/PTBR/` (veja `dados/
 python -m redes.aplicacao.experimento
 ```
 
-Leva cerca de 30 segundos: 10 no SIR e 20 nas centralidades (a intermediação exata é a mais lenta).
+Leva cerca de 45 segundos: 15 no SIR e 30 nas centralidades (a intermediação exata é a mais lenta).
 Com `--rodadas 10`, o SIR fica mais rápido, para conferir se tudo funciona. As opções `--beta`,
 `--semente` e `--pasta` mudam o beta, a semente e a pasta onde os CSVs são gravados.
 

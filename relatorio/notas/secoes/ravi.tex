@@ -26,18 +26,32 @@ Função & Arquivo & Complexidade & Situação \\
 \end{tabularx}}
 
 \subsection{Problema aplicado}
-\pendente{a pergunta, a entrada, a saída e como validar --- texto da descrição formal da Etapa 1}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Pergunta:} quais streamers da Twitch PT são os influenciadores, e qual das seis
+        centralidades os encontra melhor. \textbf{P1}: qual ordena melhor pelo alcance no SIR;
+        \textbf{P2}: qual ordena melhor pelas visualizações reais.
+  \item \textbf{Hipóteses:} \textbf{H1}, $\tau_b(k_s, \rho) > \tau_b(\text{grau}, \rho)$~\cite{kitsak2010};
+        \textbf{H2}, $0 < \tau_b(c, w) < \tau_b(c, \rho)$ para toda $c$.
+  \item \textbf{Entrada:} o grafo da Twitch PT (1.912 streamers, 31.299 amizades) e as
+        visualizações $w(v)$ de cada canal.
+  \item \textbf{Saída:} o ranking pelo alcance $\rho$ (empates pelo grau e depois pelo nó) e, para
+        cada centralidade $c$, $\tau_b(c, \rho)$ e $\tau_b(c, w)$.
+  \item \textbf{Validação:} $\rho(v)$ é a média de $M = 100$ rodadas do SIR a partir de $v$, e a
+        concordância é o $\tau_b$ de Kendall. O texto completo está na descrição formal da Etapa 1
+        e na seção do problema aplicado do relatório final.
+\end{itemize}
 
 \subsection{Decisões e justificativas}
 \begin{itemize}[leftmargin=*]
-  \item SIR em tempo discreto, com $\beta$ um pouco acima do limiar epidêmico (0,0079 na Twitch PT),
-        por exemplo 0,012, e $\gamma = 1$, seguindo~\cite{kitsak2010}. \pendente{confirmar os valores usados}
+  \item SIR em tempo discreto, com $\beta$ um pouco acima do limiar epidêmico (0,0079 na Twitch PT):
+        $\beta = 0{,}012 \approx 1{,}5\,\beta_c$, $\gamma = 1$, $M = 100$ rodadas por nó e semente
+        2026, seguindo~\cite{kitsak2010}. São os valores do experimento e os padrões da interface.
   \item O limiar é $\beta_c = \langle k \rangle / (\langle k^2 \rangle - \langle k \rangle)$~\cite{newman2002}:
         com $\gamma = 1$, $\beta$ é a chance de cada aresta transmitir, e o SIR vira percolação de
         arestas. Sem nó de grau 2 ou mais, o limiar é infinito. Só vale para grafo não direcionado.
   \item A simulação usa listas indexadas $0..n-1$ e um \codigo{bytearray} de estados que é zerado só
         nos nós atingidos: cada rodada custa o tamanho do surto, e não $O(n)$. Na Twitch PT, com
-        $\beta = 0{,}012$ e $M = 100$, as 191.200 rodadas levam cerca de 22\,s.
+        $\beta = 0{,}012$ e $M = 100$, as 191.200 rodadas levam cerca de 15\,s.
   \item Um único gerador \codigo{random.Random(semente)} serve a todas as rodadas: com a mesma
         semente, o resultado se repete.
   \item O \codigo{simular\_sir} aceita $\gamma < 1$ (o infectado tenta de novo a cada passo), porque
@@ -77,7 +91,7 @@ $\tau$ entre PageRank / k-core e visualizações & Twitch PT & 0,4386 / 0,4034 &
 
 \subsection{Resultados}
 Poder de espalhamento na Twitch PT (\codigo{python -m redes.aplicacao.experimento}; $\beta = 0{,}012$,
-$\gamma = 1$, 100 rodadas por nó, semente 2026, cerca de 20\,s). Os atingidos por rodada vão de 1
+$\gamma = 1$, 100 rodadas por nó, semente 2026, cerca de 15\,s). Os atingidos por rodada vão de 1
 (o surto morre na origem) a 88 (4,6\% da rede), com mediana 7,4. Os dez maiores alcances estão
 todos no núcleo mais interno ($k_s = 37$); o nó 36 (grau 276) entra no top 10, e nós de grau 454 e
 385 ficam de fora. A tabela completa está em \codigo{aplicacao/resultados/alcance\_twitch.csv}.
@@ -131,7 +145,19 @@ Número de núcleo & 0,7301 & 0,4034 \\
 
 \subsection{Limitações e pendências}
 \begin{itemize}[leftmargin=*]
-  \item \pendente{ex.: custo do SIR por Monte Carlo; número de rodadas usado}
+  \item \textbf{Ruído do Monte Carlo por nó.} Com $M = 100$, o alcance de um nó isolado pode
+        errar bastante quando os surtos grandes são raros: o nó 254 tem 1,98\% com 100 rodadas e
+        1,02\% com 3.000. O $\tau_b$, que compara os 1.912 nós de uma vez, é estável (a ordem das
+        seis centralidades se repete com as sementes 1, 2 e 3). Para comparar dois nós específicos,
+        é melhor usar mais rodadas.
+  \item \textbf{Custo.} As 191.200 rodadas levam cerca de 15\,s, e as centralidades exatas, cerca
+        de 30\,s (a intermediação é a mais lenta). Na interface, a primeira carga da Twitch PT leva
+        cerca de 21\,s, e o resto vem do cache.
+  \item \textbf{Um único $\beta$.} Os resultados são para $\beta = 1{,}5\,\beta_c$; com $2\beta_c$,
+        o núcleo passa à frente da harmônica na P1.
+  \item \textbf{Interface.} O $\tau$ da tela cobre cinco centralidades: a intermediação fica de fora,
+        porque a tela só a estima com 15 pivôs. Os contadores I, R e S são um retrato de uma rodada,
+        e as curvas, a média das rodadas.
 \end{itemize}
 
 \subsection{Registro}
@@ -150,4 +176,14 @@ Número de núcleo & 0,7301 & 0,4034 \\
     sem dados, virou o $\tau_b$ do grau, do núcleo e do PageRank contra o alcance e, na Twitch,
     contra as visualizações (com $\approx$ quando há amostra, em redes com mais de 2.000 nós);
     o pedido com $\beta$ ou $\gamma$ inválido é recusado sem mudar a sessão; 66 testes.}
+  \registro{2026-11-22}{a tela de influenciadores responde à P1, à P2, à H1 e à H2: o rodapé
+    mostra o $\tau_b$ de cinco centralidades (grau, proximidade, harmônica, núcleo e PageRank)
+    contra o alcance e, na Twitch, contra as visualizações, em ordem decrescente, com o veredicto
+    de cada hipótese; o selo de melhor preditor, antes fixo, passa a ser calculado (na Twitch,
+    harmônica 0,74 e PageRank 0,44, os mesmos do experimento). A proximidade e a harmônica são
+    calculadas por BFS a partir de cada origem do alcance, cerca de 6\,s a mais na primeira
+    carga da Twitch. A intermediação fica de fora: a tela só tem a estimativa com 15 pivôs.
+    Também: os contadores do retrato contam a semente pelo estado real (I ou R), e as curvas
+    I(t) e R(t) passam a dividir a mesma escala. O selo do mapa mostra o grau e o núcleo da
+    semente ativa, de qualquer nó.}
 \end{description}

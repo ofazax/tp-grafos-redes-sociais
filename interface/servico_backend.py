@@ -406,6 +406,7 @@ def simular_sir_monte_carlo(
         g, semente_no, beta, gamma=gamma, rodadas=max(1, int(simulacoes)), semente=semente_aleatoria
     )
     estados = dict(evolucao["estados"])
+    estado_semente = estados.get(semente_no, "S")
     estados[semente_no] = "SEED"
     res = {
         "alcance_medio": evolucao["alcance"],
@@ -413,6 +414,7 @@ def simular_sir_monte_carlo(
         "curva_i": evolucao["curva_i"],
         "curva_r": evolucao["curva_r"],
         "estados_snapshot": estados,
+        "estado_semente": estado_semente,
     }
     _CACHE_SIR[chave_sir] = res
     return res
@@ -501,16 +503,30 @@ def concordancia_sir_da_tela(
     semente: int,
     rodadas: int,
     atributos: dict[No, dict] | None = None,
-) -> str:
-    """Texto com o tau-b do grau, do núcleo e do PageRank contra o alcance (e, na Twitch PT,
-    contra as visualizações reais).
+) -> dict[str, str]:
+    """As perguntas P1 e P2 e as hipóteses H1 e H2 da Frente 5, na rede ativa.
 
-    O alcance vem de `alcance_da_tela`: em redes com mais de MAX_ORIGENS_CONCORDANCIA nós, é o de
-    uma amostra de origens, e os valores aparecem com "≈". Fica em cache por rede e parâmetros.
+    Calcula o tau-b de cinco centralidades (grau, proximidade, harmônica, núcleo e PageRank)
+    contra o alcance no SIR (P1) e, na Twitch PT, contra as visualizações reais (P2). Fica de
+    fora só a intermediação: a tela a estima com 15 pivôs, o que não basta para ordenar todos
+    os nós, e a versão exata custaria mais uns 15 s na Twitch; ela não vence nenhuma das duas
+    perguntas no experimento completo (Seção de influenciadores do relatório).
+
+    A proximidade e a harmônica são calculadas aqui, por uma BFS a partir de cada origem do
+    alcance: a análise geral só as tem para 8 nós em redes com mais de 350. Na Twitch PT, os
+    valores coincidem com os do experimento (harmônica 0,7435, proximidade 0,7344).
+
+    Devolve {"texto": rodapé com os tau em ordem decrescente e os veredictos de H1 e H2,
+    "melhor_preditor": a centralidade de maior tau contra cada referência}. O alcance vem de
+    `alcance_da_tela`: em redes com mais de MAX_ORIGENS_CONCORDANCIA nós, é o de uma amostra de
+    origens, e os valores aparecem com "≈". Fica em cache por rede e parâmetros.
     """
     n = g.numero_de_nos()
     if n < 2:
-        return "Concordância (τ de Kendall): rede pequena demais"
+        return {
+            "texto": "Concordância (τ de Kendall): rede pequena demais",
+            "melhor_preditor": "Melhor preditor: rede pequena demais",
+        }
 
     chave = (id(g), n, g.numero_de_arestas(), beta, gamma, semente, rodadas, "concordancia")
     if chave in _CACHE_SIR:
@@ -518,8 +534,18 @@ def concordancia_sir_da_tela(
 
     alcance, amostrado = alcance_da_tela(g, beta, gamma, semente, rodadas)
 
+    # Proximidade e harmônica das origens do alcance, pelo mesmo cálculo para todos os nós (o
+    # tau só usa os nós presentes nos dois lados).
+    proximidade_origens: dict[No, float] = {}
+    harmonica_origens: dict[No, float] = {}
+    for v in alcance:
+        proximidade_origens[v], harmonica_origens[v] = _closeness_e_harmonica_no(g, v)
+
+    # Na ordem do relatório: num empate de tau, vence a que aparece primeiro.
     centralidades = [
         ("Grau", analise["centralidade_grau"]),
+        ("Proximidade", proximidade_origens),
+        ("Harmônica", harmonica_origens),
         ("k-Core", analise["kcore"]),
         ("PageRank", analise["pagerank"]),
     ]
@@ -528,17 +554,46 @@ def concordancia_sir_da_tela(
     def formatar(tau: float) -> str:
         return "—" if math.isnan(tau) else formatar_float_br(tau, 2)
 
-    partes = [f"{nome} τ{aprox}{formatar(tau_de_kendall(valores, alcance))}" for nome, valores in centralidades]
-    texto = "τ de Kendall com o alcance SIR: " + " • ".join(partes)
+    def em_ordem(taus: list[tuple[str, float]]) -> list[tuple[str, float]]:
+        # Do maior para o menor tau; NaN (rede sem ordem) vai para o fim.
+        return sorted(taus, key=lambda par: -par[1] if not math.isnan(par[1]) else math.inf)
+
+    def melhor(taus: list[tuple[str, float]], sinal: str) -> str:
+        nome, tau = em_ordem(taus)[0]
+        return "—" if math.isnan(tau) else f"{nome} (τ{sinal}{formatar(tau)})"
+
+    def linha(taus: list[tuple[str, float]], sinal: str) -> str:
+        prefixo = "≈" if sinal == "≈" else ""
+        return " • ".join(f"{nome} {prefixo}{formatar(tau)}" for nome, tau in em_ordem(taus))
+
+    taus_alcance = [(nome, tau_de_kendall(valores, alcance)) for nome, valores in centralidades]
+    tau_rho = dict(taus_alcance)
+    linhas = [f"τ de Kendall com o alcance SIR (P1): {linha(taus_alcance, aprox)}"]
+    selo = f"Melhor preditor do alcance: {melhor(taus_alcance, aprox)}"
+
+    # H1: o núcleo supera o grau como preditor do alcance (Kitsak et al., 2010).
+    if math.isnan(tau_rho["k-Core"]) or math.isnan(tau_rho["Grau"]):
+        hipoteses = ["H1 (k-Core > Grau): sem ordem para comparar"]
+    else:
+        confirmada = tau_rho["k-Core"] > tau_rho["Grau"]
+        hipoteses = [f"H1 (k-Core > Grau no alcance): {'confirmada' if confirmada else 'não confirmada'}"]
 
     if atributos:
         visualizacoes = {v: dados["visualizacoes"] for v, dados in atributos.items() if "visualizacoes" in dados}
         if visualizacoes:
-            partes_w = [f"{nome} τ={formatar(tau_de_kendall(valores, visualizacoes))}" for nome, valores in centralidades]
-            texto += " | com as visualizações reais: " + " • ".join(partes_w)
+            taus_w = [(nome, tau_de_kendall(valores, visualizacoes)) for nome, valores in centralidades]
+            linhas.append(f"τ de Kendall com as visualizações reais (P2): {linha(taus_w, '=')}")
+            selo += f" • da audiência: {melhor(taus_w, '=')}"
+            # H2: toda centralidade concorda com a audiência, mas menos do que com o alcance.
+            confirmada = all(0 < tau_w < tau_rho[nome] for nome, tau_w in taus_w)
+            hipoteses.append(
+                f"H2 (0 < τ audiência < τ alcance, nas 5): {'confirmada' if confirmada else 'não confirmada'}"
+            )
 
-    _CACHE_SIR[chave] = texto
-    return texto
+    linhas.append(" • ".join(hipoteses))
+    resultado = {"texto": "\n".join(linhas), "melhor_preditor": selo}
+    _CACHE_SIR[chave] = resultado
+    return resultado
 
 
 # ---------------------------------------------------------------------------
@@ -1681,11 +1736,23 @@ class GerenciadorSessaoBackend:
                 if no_real_vis == semente_sir
                 else estados_snap.get(no_real_vis, "S")
             )
-        cont_inf = sum(1 for v in g.nos() if estados_snap.get(v) in ("I", "SEED"))
-        cont_rec = sum(1 for v in g.nos() if estados_snap.get(v) == "R")
+        estado_semente = sir_detalhe.get("estado_semente")
+        cont_inf = sum(1 for v in g.nos() if estados_snap.get(v) == "I") + (estado_semente == "I")
+        cont_rec = sum(1 for v in g.nos() if estados_snap.get(v) == "R") + (estado_semente == "R")
         cont_sus = max(0, g.numero_de_nos() - cont_inf - cont_rec)
 
-        concordancia_str = concordancia_sir_da_tela(
+        # Resumo da semente ativa no selo do mapa: o grau e o k-core que a tabela do top 5 mostra,
+        # para qualquer nó escolhido.
+        semente_detalhe_str = (
+            f"grau {g.grau(semente_sir)} • k-core {int(analise['kcore'].get(semente_sir, 0))}"
+            if semente_sir is not None
+            else ""
+        )
+
+        def nos_str(qtd: int) -> str:
+            return f"{formatar_int_br(qtd)} {'nó' if qtd == 1 else 'nós'}"
+
+        concordancia = concordancia_sir_da_tela(
             g,
             analise,
             self.sir_beta,
@@ -1808,14 +1875,16 @@ class GerenciadorSessaoBackend:
                 "semente": self.sir_seed,
                 "no_semente": str(semente_sir) if semente_sir is not None else "",
                 "no_semente_rotulo": formatar_rotulo_no(semente_sir) if semente_sir is not None else "",
-                "alcance_str": f"{sir_detalhe['alcance_medio'] * 100.0:.1f}%".replace(".", ","),
-                "infectados_str": f"{formatar_int_br(cont_inf)} nós",
-                "recuperados_str": f"{formatar_int_br(cont_rec)} nós",
-                "suscetiveis_str": f"{formatar_int_br(cont_sus)} nós",
+                "alcance_str": f"{alcance_top.get(semente_sir, sir_detalhe['alcance_medio']) * 100.0:.1f}%".replace(".", ","),
+                "infectados_str": nos_str(cont_inf),
+                "recuperados_str": nos_str(cont_rec),
+                "suscetiveis_str": nos_str(cont_sus),
+                "semente_detalhe_str": semente_detalhe_str,
                 "curva_s": [round(x, 4) for x in sir_detalhe["curva_s"]],
                 "curva_i": [round(x, 4) for x in sir_detalhe["curva_i"]],
                 "curva_r": [round(x, 4) for x in sir_detalhe["curva_r"]],
-                "correlacao_str": concordancia_str,
+                "correlacao_str": concordancia["texto"],
+                "melhor_preditor_str": concordancia["melhor_preditor"],
                 "limiar": self.sir_beta_c,
                 "limiar_str": (
                     f"β_c = {formatar_float_br(self.sir_beta_c, 4)}"

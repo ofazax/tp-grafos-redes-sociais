@@ -2,12 +2,13 @@
 
 const SIR_CHART = { width: 532, height: 132, padX: 12, padY: 16 };
 
-function buildSvgCurvePath(values, width, height, padX, padY) {
+function buildSvgCurvePath(values, width, height, padX, padY, escalaFixa) {
   if (!values || values.length === 0) return '';
   const usableW = width - padX * 2;
   const usableH = height - padY * 2;
   const maxVal = Math.max(...values, 0.01);
-  const scaleMax = maxVal > 0.35 ? 1.0 : Math.min(1.0, maxVal * 1.35);
+  // escalaFixa: o valor que fica no topo do gráfico; curvas com a mesma escala podem ser comparadas.
+  const scaleMax = escalaFixa || (maxVal > 0.35 ? 1.0 : Math.min(1.0, maxVal * 1.35));
 
   return values.map((v, idx) => {
     const x = padX + (idx / Math.max(1, values.length - 1)) * usableW;
@@ -269,7 +270,12 @@ function renderCommunityListUI() {
 function renderInfluenciadoresPage() {
   const sir = BACKEND_STATE.sir;
 
-  setInnerHtmlIfPresent('sirSeedNodeSelect', sir.top_influenciadores.map((inf, idx) => `
+  const sementeNoTop = sir.top_influenciadores.some(inf => inf.id === sir.no_semente);
+  const opcaoSemente = sementeNoTop || !sir.no_semente ? '' : `
+    <option value="${sir.no_semente}" selected>
+      ${sir.no_semente_rotulo} (escolhido • Alcance: ${sir.alcance_str})
+    </option>`;
+  setInnerHtmlIfPresent('sirSeedNodeSelect', opcaoSemente + sir.top_influenciadores.map((inf, idx) => `
     <option value="${inf.id}" ${inf.id === sir.no_semente ? 'selected' : ''}>
       ${inf.rotulo_curto} (Top #${idx + 1} • Alcance: ${inf.alcance})
     </option>
@@ -291,15 +297,23 @@ function renderInfluenciadoresPage() {
   setText('sirStatInfected', sir.infectados_str);
   setText('sirStatRecovered', sir.recuperados_str);
   setText('sirStatSusceptible', sir.suscetiveis_str);
-  setText('sirGraphHeaderBadge', `Semente Ativa: ${sir.no_semente_rotulo} (Alcance: ${sir.alcance_str})`);
+  // Grau e k-core da semente: dá para comparar dois nós quaisquer, mesmo fora do top 5.
+  const detalheSemente = sir.semente_detalhe_str ? ` • ${sir.semente_detalhe_str}` : '';
+  setText('sirGraphHeaderBadge', `Semente Ativa: ${sir.no_semente_rotulo} (Alcance: ${sir.alcance_str})${detalheSemente}`);
   setText('sirChartTitle', `Curvas Epidemiológicas S(t), I(t), R(t) — Semente ${sir.no_semente_rotulo}`);
   setText('sirPearsonFooter', sir.correlacao_str);
+  setText('sirMelhorPreditor', sir.melhor_preditor_str);
   setText('sirReachFooter', `Alcance: ${sir.alcance_str}`);
 
   const { width, height, padX, padY } = SIR_CHART;
-  document.getElementById('sirSusceptibleCurve').setAttribute('d', buildSvgCurvePath(sir.curva_s, width, height, padX, padY));
-  document.getElementById('sirInfectedCurve').setAttribute('d', buildSvgCurvePath(sir.curva_i, width, height, padX, padY));
-  document.getElementById('sirRecoveredCurve').setAttribute('d', buildSvgCurvePath(sir.curva_r, width, height, padX, padY));
+  const escalaIR = Math.min(1.0, Math.max(...sir.curva_i, ...sir.curva_r, 0.001) * 1.15);
+  const pct = x => `${(x * 100).toFixed(1).replace('.', ',')}%`;
+  document.getElementById('sirSusceptibleCurve').setAttribute('d', buildSvgCurvePath(sir.curva_s, width, height, padX, padY, 1.0));
+  document.getElementById('sirInfectedCurve').setAttribute('d', buildSvgCurvePath(sir.curva_i, width, height, padX, padY, escalaIR));
+  document.getElementById('sirRecoveredCurve').setAttribute('d', buildSvgCurvePath(sir.curva_r, width, height, padX, padY, escalaIR));
+  setText('sirChartSubtitle',
+    `Média das ${sir.simulacoes} simulações por passo t • S(t) de 0 a 100%; I(t) e R(t) de 0 a ${pct(escalaIR)} da rede • `
+    + `pico de I: ${pct(Math.max(...sir.curva_i))} • R final: ${pct(sir.curva_r[sir.curva_r.length - 1])}`);
 
   renderTopInfluencersTableUI();
 }
