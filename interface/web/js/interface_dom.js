@@ -297,9 +297,12 @@ function renderInfluenciadoresPage() {
   setText('sirStatInfected', sir.infectados_str);
   setText('sirStatRecovered', sir.recuperados_str);
   setText('sirStatSusceptible', sir.suscetiveis_str);
-  setText('sirGraphHeaderBadge', `Semente Ativa: ${sir.no_semente_rotulo} (Alcance: ${sir.alcance_str})`);
+  // Grau e k-core da semente: dá para comparar dois nós quaisquer, mesmo fora do top 5.
+  const detalheSemente = sir.semente_detalhe_str ? ` • ${sir.semente_detalhe_str}` : '';
+  setText('sirGraphHeaderBadge', `Semente Ativa: ${sir.no_semente_rotulo} (Alcance: ${sir.alcance_str})${detalheSemente}`);
   setText('sirChartTitle', `Curvas Epidemiológicas S(t), I(t), R(t) — Semente ${sir.no_semente_rotulo}`);
   setText('sirPearsonFooter', sir.correlacao_str);
+  setText('sirMelhorPreditor', sir.melhor_preditor_str);
   setText('sirReachFooter', `Alcance: ${sir.alcance_str}`);
 
   const { width, height, padX, padY } = SIR_CHART;
