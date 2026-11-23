@@ -28,4 +28,4 @@ Regras:
   No VS Code (LaTeX Workshop), use a receita *pdflatex ➞ bibtex ➞ pdflatex × 2*.
 - **Overleaf:** faça upload da pasta `relatorio/etapa1/` e compile `etapa1.tex`.
 
-O PDF não vai para o Git; ele é entregue no Canvas.
+O PDF compilado (`etapa1.pdf`) também está no Git, para quem quiser ler o documento sem compilar.
