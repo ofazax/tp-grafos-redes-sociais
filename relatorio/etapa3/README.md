@@ -50,7 +50,8 @@ Se alguém mudar uma seção, compile de novo e confira se o PDF continua com no
   No VS Code (LaTeX Workshop), use a receita *pdflatex ➞ bibtex ➞ pdflatex × 2*.
 - **Overleaf:** faça upload da pasta `relatorio/etapa3/` e compile `etapa3.tex`.
 
-O PDF não vai para o Git; ele vai no .zip da entrega.
+O PDF compilado (`etapa3.pdf`) não vai para o Git. A versão entregue fica na raiz do repositório,
+em `Relatorio-Final-TP-Grafos.pdf`.
 
 ## Antes de entregar (revisão final)
 

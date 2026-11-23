@@ -6,6 +6,8 @@ Bibliotecas de grafos (NetworkX etc.) só aparecem em `desempenho/`, para compar
 
 Repositório, com o histórico de commits do grupo: https://github.com/ofazax/tp-grafos-redes-sociais
 
+O relatório final está em `Relatorio-Final-TP-Grafos.pdf`, e o código-fonte dele, em `relatorio/etapa3/`.
+
 ## Como rodar (Windows, Prompt de Comando)
 
 ```bat
@@ -36,6 +38,9 @@ desempenho/     medições e comparação com o NetworkX
 tests/          testes (pytest + Hypothesis)
 dados/          links das bases; dados/brutos/ fica fora do Git
 documentos/uml/ diagramas UML
+documentos/cronograma.pdf  cronograma: linha do tempo e lista de tarefas, antes e depois
+relatorio/      fontes LaTeX (template SBC): etapa1/ e etapa3/ (relatório final)
+Relatorio-Final-TP-Grafos.pdf  relatório final em PDF
 ```
 
 O código usa nomes em português (`Grafo`, `adicionar_aresta`, `grau`...). Siglas e nomes
