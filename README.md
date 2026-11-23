@@ -6,7 +6,8 @@ Bibliotecas de grafos (NetworkX etc.) só aparecem em `desempenho/`, para compar
 
 Repositório, com o histórico de commits do grupo: https://github.com/ofazax/tp-grafos-redes-sociais
 
-O relatório final está em `Relatorio-Final-TP-Grafos.pdf`, e o código-fonte dele, em `relatorio/etapa3/`.
+O relatório final está em `relatorio/Relatorio-Tecnico-Analise-de-Redes-Sociais-Com-Grafos.pdf`, e o código-fonte dele, em `relatorio/etapa3/`.
+Os slides da apresentação estão em `apresentacao/`, em PDF e em PowerPoint.
 
 ## Como rodar (Windows, Prompt de Comando)
 
@@ -39,8 +40,8 @@ tests/          testes (pytest + Hypothesis)
 dados/          links das bases; dados/brutos/ fica fora do Git
 documentos/uml/ diagramas UML
 documentos/cronograma.pdf  cronograma: linha do tempo e lista de tarefas, antes e depois
-relatorio/      fontes LaTeX (template SBC): etapa1/ e etapa3/ (relatório final)
-Relatorio-Final-TP-Grafos.pdf  relatório final em PDF
+relatorio/      relatório final em PDF e fontes LaTeX (template SBC): etapa1/ e etapa3/
+apresentacao/   slides da apresentação (PDF e PowerPoint)
 ```
 
 O código usa nomes em português (`Grafo`, `adicionar_aresta`, `grau`...). Siglas e nomes
